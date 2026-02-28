@@ -335,6 +335,9 @@ canvas {
 
 /* ══════════════════════════════════════
    DATE PICKER PANEL
+   Desktop: calendar left | arc right (top row)
+            day detail spans full width (bottom row)
+   Mobile:  single column stack
 ══════════════════════════════════════ */
 .picker-section {
   background: var(--color-bg-surface);
@@ -343,12 +346,26 @@ canvas {
   padding: var(--sp-3);
   margin-bottom: var(--sp-3);
   display: grid;
-  grid-template-columns: auto 1fr 2fr;
-  gap: var(--sp-4);
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  gap: var(--sp-3) var(--sp-4);
   align-items: start;
 }
+/* Calendar: top-left */
+.picker-section .cal-col  { grid-column: 1; grid-row: 1; }
+/* Arc plot: top-right, spans down */
+.picker-section .arc-col  { grid-column: 2; grid-row: 1; }
+/* Day detail: full width below calendar and arc */
+.picker-section .day-detail { grid-column: 1 / -1; grid-row: 2; }
+
 @media (max-width: 700px) {
-  .picker-section { grid-template-columns: 1fr; }
+  .picker-section {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+  .picker-section .cal-col,
+  .picker-section .arc-col,
+  .picker-section .day-detail { grid-column: 1; grid-row: auto; }
 }
 
 .picker-col-label {
@@ -452,21 +469,26 @@ canvas {
 }
 .cal-cell.empty { cursor: default; pointer-events: none; }
 
-/* ── Day detail card ── */
+/* ── Day detail card — full width below calendar ── */
 .day-detail { min-width: 0; }
 .day-detail-inner {
   background: var(--color-bg-base);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius);
-  padding: var(--sp-3);
-  min-height: 140px;
+  padding: var(--sp-2) var(--sp-3);
+  min-height: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-4);
+  align-items: flex-start;
 }
 .dd-date {
+  width: 100%;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--color-text-interactive);
   margin-bottom: var(--sp-2);
-  padding-bottom: var(--sp-2);
+  padding-bottom: var(--sp-1);
   border-bottom: 1px solid var(--color-border-default);
 }
 .dd-row {
@@ -475,7 +497,9 @@ canvas {
   gap: var(--sp-2);
   padding: 3px 0;
   font-size: 0.75rem;
-  border-bottom: 1px solid rgba(43,101,155,0.25);
+  border-bottom: 1px solid rgba(43,101,155,0.2);
+  min-width: 160px;
+  flex: 1 1 160px;
 }
 .dd-row:last-child { border-bottom: none; }
 .dd-key { color: var(--color-text-placeholder); flex-shrink: 0; }
@@ -484,7 +508,7 @@ canvas {
   color: var(--color-text-placeholder);
   font-size: 0.875rem;
   line-height: 1.5;
-  padding-top: var(--sp-2);
+  padding: var(--sp-1) 0;
 }
 
 /* ── Sun/Moon altitude plot ── */
@@ -827,7 +851,7 @@ footer {
    PWA INSTALL BANNER (Astro Notification Banner pattern)
 ══════════════════════════════════════ */
 #pwa-banner {
-  display: none;
+  display: none;  /* hidden by default; JS removes .hidden class to show */
   position: fixed;
   bottom: var(--sp-4);
   left: 50%;
@@ -838,13 +862,12 @@ footer {
   border-radius: var(--radius);
   padding: var(--sp-3) var(--sp-4);
   box-shadow: var(--shadow-overlay);
-  display: flex;
   align-items: center;
   gap: var(--sp-3);
   max-width: calc(100vw - 2rem);
   animation: slideUp 0.2s ease;
 }
-#pwa-banner.hidden { display: none !important; }
+#pwa-banner.visible { display: flex; }
 @keyframes slideUp {
   from { opacity:0; transform: translateX(-50%) translateY(12px); }
   to   { opacity:1; transform: translateX(-50%) translateY(0); }
@@ -976,7 +999,7 @@ footer {
   <div class="picker-section" id="pickerSection">
 
     <!-- Calendar -->
-    <div>
+    <div class="cal-col">
       <div class="picker-col-label">Select Date</div>
       <div class="cal-nav">
         <button id="calPrev" aria-label="Previous month">◀</button>
@@ -3382,7 +3405,7 @@ window.addEventListener('resize', () => {
 });
 </script>
 <!-- ═══════════════════════ PWA INSTALL BANNER ═══════════════════════ -->
-<div id="pwa-banner" class="hidden" role="dialog" aria-label="Install app">
+<div id="pwa-banner" role="dialog" aria-label="Install app">
   <span class="pwa-icon">📡</span>
   <div class="pwa-text">
     <strong>Install Solar Planner</strong><br>
@@ -3418,11 +3441,10 @@ let _deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   _deferredPrompt = e;
-  // Only show if not already installed and not previously dismissed
   if (!localStorage.getItem('pwa-dismissed')) {
     setTimeout(() => {
-      document.getElementById('pwa-banner').classList.remove('hidden');
-    }, 3000); // show after 3s so it doesn't interrupt initial load
+      document.getElementById('pwa-banner').classList.add('visible');
+    }, 3000);
   }
 });
 
@@ -3431,16 +3453,16 @@ document.getElementById('pwa-install-btn').addEventListener('click', async () =>
   _deferredPrompt.prompt();
   const { outcome } = await _deferredPrompt.userChoice;
   _deferredPrompt = null;
-  document.getElementById('pwa-banner').classList.add('hidden');
+  document.getElementById('pwa-banner').classList.remove('visible');
 });
 
 document.getElementById('pwa-dismiss-btn').addEventListener('click', () => {
-  document.getElementById('pwa-banner').classList.add('hidden');
+  document.getElementById('pwa-banner').classList.remove('visible');
   localStorage.setItem('pwa-dismissed', '1');
 });
 
 window.addEventListener('appinstalled', () => {
-  document.getElementById('pwa-banner').classList.add('hidden');
+  document.getElementById('pwa-banner').classList.remove('visible');
   _deferredPrompt = null;
 });
 </script>
