@@ -1,7 +1,8 @@
 // Solar Planner — Service Worker
+// Build: 2026-02-28 18:38 UTC
 // CACHE version is set by a build timestamp injected at deploy time (see README).
 // If deploying manually, increment the number below each time you push a new version.
-const CACHE = 'solar-planner-v2';
+const CACHE = 'solar-planner-20260228_183855';
 
 // Assets to pre-cache on install
 const PRECACHE = [
