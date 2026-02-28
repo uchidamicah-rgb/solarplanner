@@ -1179,8 +1179,8 @@ footer {
 
 <script>
 'use strict';
-const BUILD_VERSION = 'solar-planner-20260228_185822';
-const BUILD_DATE = '2026-02-28 18:58 UTC';
+const BUILD_VERSION = 'solar-planner-20260228_190543';
+const BUILD_DATE = '2026-02-28 19:05 UTC';
 // ══════════════════════════════════════════════════════════════
 //  LOCATION STATE  — mutable, drives all calculations
 // ══════════════════════════════════════════════════════════════
@@ -2368,29 +2368,38 @@ function bindChart(canvasId) {
   // All listeners use passive:true so native scroll is completely unobstructed.
   canvas.addEventListener('touchstart', e => {
     const t = e.touches[0];
-    showTouchTooltip(getDoy(t.clientX), t.clientX, t.clientY);
+    showTouchTooltip(getDoy(t.clientX), canvas);
   }, { passive: true });
 
   canvas.addEventListener('touchmove', e => {
     const t = e.touches[0];
-    showTouchTooltip(getDoy(t.clientX), t.clientX, t.clientY);
+    showTouchTooltip(getDoy(t.clientX), canvas);
   }, { passive: true });
 
   canvas.addEventListener('touchend',    () => { ttEl.style.display = 'none'; }, { passive: true });
   canvas.addEventListener('touchcancel', () => { ttEl.style.display = 'none'; }, { passive: true });
 }
 
-// Touch tooltip: positioned above the finger so the hand doesn't cover it
-function showTouchTooltip(doy, clientX, clientY) {
+// Touch tooltip: centered horizontally over the canvas, just above its top edge
+function showTouchTooltip(doy, canvas) {
   ttEl.innerHTML = getTooltipHTML(doy);
   ttEl.style.display = 'block';
-  const ttW = 220, ttH = 200;
-  // Centre horizontally on finger, above it
-  let lx = clientX - ttW / 2;
-  let ly = clientY - ttH - 20;  // above finger
-  // Clamp to viewport
+
+  const rect  = canvas.getBoundingClientRect();
+  const ttW   = ttEl.offsetWidth  || 220;
+  const ttH   = ttEl.offsetHeight || 200;
+
+  // Horizontally centered on the canvas
+  let lx = rect.left + rect.width / 2 - ttW / 2;
+  // Just above the canvas top, with a small gap
+  let ly = rect.top - ttH - 8;
+
+  // If there's not enough room above, show below instead
+  if (ly < 8) ly = rect.bottom + 8;
+
+  // Clamp horizontally to viewport
   lx = Math.max(8, Math.min(lx, window.innerWidth - ttW - 8));
-  ly = Math.max(8, ly);
+
   ttEl.style.left = lx + 'px';
   ttEl.style.top  = ly + 'px';
 }
