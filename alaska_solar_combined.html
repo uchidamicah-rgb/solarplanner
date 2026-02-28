@@ -1,0 +1,3351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Solar Planner — High Latitude</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#05080f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Solar Planner">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,600;1,400&display=swap');
+
+/* ══════════════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════════════ */
+:root {
+  --bg:       #05080f;
+  --surface:  #0a0f1e;
+  --surf2:    #0f1628;
+  --surf3:    #131d34;
+  --border:   #1b2c47;
+  --text:     #b8d0ee;
+  --muted:    #3d5870;
+  --font:     'IBM Plex Mono', monospace;
+  --font-hd:  'Orbitron', sans-serif;
+
+  /* Solar tab palette */
+  --s-bmnt:   #60c5ff;
+  --s-sr:     #f5e642;
+  --s-noon:   #42e8c8;
+  --s-eent:   #ff7e42;
+  --s-elev:   #c084fc;
+  --s-gain:   #42e8c8;
+  --s-loss:   #ff7e42;
+  --s-astro:  #9b6fff;
+  --s-sel:    #ff4fc8;
+
+  /* Photo tab palette */
+  --p-golden: #f59e0b;
+  --p-warm:   #fb923c;
+  --p-blue:   #60a5fa;
+  --p-astro:  #4f46e5;
+  --p-score:  #34d399;
+  --p-sel:    #f43f5e;
+
+  /* Tab accent (changes per tab) */
+  --tab-accent: var(--s-bmnt);
+}
+
+/* ══════════════════════════════════════
+   RESET & BASE
+══════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(ellipse 70% 40% at 20% 0%, rgba(96,197,255,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 30% at 80% 100%, rgba(192,132,252,0.04) 0%, transparent 55%);
+}
+
+/* ══════════════════════════════════════
+   HEADER
+══════════════════════════════════════ */
+.app-header {
+  text-align: center;
+  padding: 20px 16px 0;
+}
+.app-header h1 {
+  font-family: var(--font-hd);
+  font-size: clamp(0.9rem, 2.5vw, 1.6rem);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.app-header .sub {
+  font-size: clamp(0.55rem, 1.5vw, 0.65rem);
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  margin-top: 4px;
+}
+.app-header .coords {
+  display: inline-block;
+  margin-top: 8px;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 3px 12px;
+  font-size: clamp(0.55rem, 1.4vw, 0.64rem);
+  color: var(--tab-accent);
+  letter-spacing: 0.07em;
+  transition: color 0.3s;
+}
+
+/* ══════════════════════════════════════
+   TAB NAVIGATION
+══════════════════════════════════════ */
+.tab-nav {
+  display: flex;
+  gap: 0;
+  margin: 16px 16px 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surf2);
+}
+.tab-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--font-hd);
+  font-size: clamp(0.5rem, 1.6vw, 0.62rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 12px 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  overflow: hidden;
+}
+.tab-btn:last-child { border-right: none; }
+.tab-btn .tab-icon { font-size: 1.1rem; line-height: 1; }
+.tab-btn .tab-label { line-height: 1.2; }
+.tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--tab-color, var(--s-bmnt));
+  transform: scaleX(0);
+  transition: transform 0.2s;
+}
+.tab-btn:hover { background: var(--surf3); color: var(--text); }
+.tab-btn.active {
+  background: var(--surf3);
+  color: #fff;
+}
+.tab-btn.active::after { transform: scaleX(1); }
+
+/* ══════════════════════════════════════
+   TAB CONTENT
+══════════════════════════════════════ */
+.tab-content { display: none; padding: 14px 14px 48px; }
+.tab-content.active { display: block; }
+
+/* ══════════════════════════════════════
+   STATS ROW (shared)
+══════════════════════════════════════ */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.stat-card {
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent, var(--s-bmnt));
+}
+.stat-val {
+  font-family: var(--font-hd);
+  font-size: clamp(0.78rem, 2vw, 0.92rem);
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 2px;
+}
+.stat-lbl {
+  font-size: clamp(0.5rem, 1.3vw, 0.56rem);
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.stat-sub {
+  font-size: clamp(0.5rem, 1.3vw, 0.56rem);
+  color: var(--accent, var(--s-bmnt));
+  margin-top: 2px;
+}
+
+/* ══════════════════════════════════════
+   CHART PANELS
+══════════════════════════════════════ */
+.chart-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 12px 12px;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.chart-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, rgba(96,197,255,0.02) 0%, transparent 35%);
+  pointer-events: none;
+}
+.chart-title {
+  font-family: var(--font-hd);
+  font-size: clamp(0.5rem, 1.5vw, 0.58rem);
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  padding-left: 4px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--border);
+}
+canvas {
+  display: block;
+  width: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* ══════════════════════════════════════
+   LEGEND
+══════════════════════════════════════ */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 14px;
+  margin-top: 10px;
+  justify-content: center;
+}
+.li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: clamp(0.52rem, 1.3vw, 0.59rem);
+  color: var(--muted);
+}
+.li-sq  { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.li-ln  { width: 15px; height: 2px; flex-shrink: 0; }
+.li-dash { width: 15px; height: 0; border-top: 2px dashed; flex-shrink: 0; }
+.li-fill { width: 12px; height: 8px; border-radius: 2px; flex-shrink: 0; opacity: 0.65; }
+
+/* ══════════════════════════════════════
+   DATE PICKER SECTION (shared)
+══════════════════════════════════════ */
+.picker-section {
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 14px;
+  display: grid;
+  grid-template-columns: auto 1fr 2fr;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 700px) {
+  .picker-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+.picker-col-label {
+  font-family: var(--font-hd);
+  font-size: 0.54rem;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* Calendar */
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.cal-nav button {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: 0.15s;
+  min-width: 36px;
+  min-height: 32px;
+}
+.cal-nav button:hover { border-color: var(--tab-accent); color: var(--tab-accent); }
+.cal-month-label {
+  font-family: var(--font-hd);
+  font-size: clamp(0.58rem, 1.6vw, 0.66rem);
+  letter-spacing: 0.08em;
+  color: #fff;
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-hdr {
+  font-size: clamp(0.48rem, 1.2vw, 0.54rem);
+  color: var(--muted);
+  text-align: center;
+  padding: 2px 0;
+}
+.cal-cell {
+  height: clamp(26px, 4vw, 30px);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.54rem, 1.4vw, 0.62rem);
+  cursor: pointer;
+  border: 1px solid transparent;
+  color: var(--text);
+  transition: 0.12s;
+  position: relative;
+  user-select: none;
+}
+.cal-cell:hover { background: var(--surf3); border-color: var(--border); }
+.cal-cell.selected { background: var(--s-sel) !important; color: #fff !important; border-color: var(--s-sel) !important; font-weight: 700; }
+.cal-cell.polar-day { color: var(--s-sr); }
+.cal-cell.polar-night { color: var(--muted); }
+.cal-cell.gold-day::after {
+  content: '';
+  position: absolute;
+  bottom: 2px; left: 50%; transform: translateX(-50%);
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: var(--p-golden);
+}
+.cal-cell.empty { cursor: default; pointer-events: none; }
+
+/* Day detail card */
+.day-detail {
+  min-width: 0;
+}
+.day-detail-inner {
+  background: var(--surf3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  min-height: 140px;
+}
+.dd-date {
+  font-family: var(--font-hd);
+  font-size: clamp(0.7rem, 2vw, 0.82rem);
+  color: var(--s-sel);
+  margin-bottom: 8px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--border);
+}
+.dd-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 0;
+  font-size: clamp(0.56rem, 1.5vw, 0.64rem);
+  border-bottom: 1px solid rgba(27,44,71,0.35);
+}
+.dd-row:last-child { border-bottom: none; }
+.dd-key { color: var(--muted); flex-shrink: 0; }
+.dd-val { color: #fff; font-weight: 600; text-align: right; }
+.dd-placeholder {
+  color: var(--muted);
+  font-size: 0.62rem;
+  line-height: 1.7;
+  padding-top: 6px;
+}
+
+/* Sun/Moon altitude plot panel */
+.arc-col {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 2 1 300px;
+  min-width: 220px;
+}
+#sharedArcCanvas { display: block; width: 100%; }
+
+/* Quality badge */
+.quality-badge {
+  text-align: center;
+  padding: 10px 0 4px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+.qb-label {
+  font-size: clamp(0.48rem, 1.2vw, 0.54rem);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.qb-score {
+  font-family: var(--font-hd);
+  font-size: clamp(1.4rem, 4vw, 1.9rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+.qb-sub { font-size: clamp(0.5rem, 1.3vw, 0.58rem); color: var(--muted); margin-top: 2px; }
+
+/* Photo windows */
+.photo-windows {
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+.photo-windows h4 {
+  font-family: var(--font-hd);
+  font-size: clamp(0.5rem, 1.5vw, 0.58rem);
+  letter-spacing: 0.18em;
+  color: var(--p-golden);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.pw {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(27,44,71,0.35);
+  font-size: clamp(0.55rem, 1.4vw, 0.62rem);
+}
+.pw:last-child { border-bottom: none; }
+.pw-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.pw-time { color: #fff; font-weight: 600; min-width: 90px; }
+.pw-dur  { color: var(--muted); }
+.pw-label { font-weight: 600; margin-bottom: 1px; }
+.pw-desc { color: var(--text); line-height: 1.4; opacity: 0.8; }
+
+/* ══════════════════════════════════════
+   TOOLTIP
+══════════════════════════════════════ */
+#tooltip {
+  position: fixed;
+  background: rgba(5,8,15,0.97);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--tab-accent);
+  border-radius: 6px;
+  padding: 9px 13px;
+  font-family: var(--font);
+  font-size: clamp(0.56rem, 1.4vw, 0.63rem);
+  color: var(--text);
+  pointer-events: none;
+  z-index: 500;
+  display: none;
+  min-width: 190px;
+  line-height: 1.85;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.8);
+  transition: border-color 0.2s;
+}
+.tt-hdr {
+  font-family: var(--font-hd);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  color: var(--tab-accent);
+  margin-bottom: 5px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+.tt-r  { display: flex; justify-content: space-between; gap: 12px; }
+.tt-k  { color: var(--muted); }
+.tt-v  { color: #fff; font-weight: 600; }
+
+/* ══════════════════════════════════════
+   FOOTER
+══════════════════════════════════════ */
+footer {
+  text-align: center;
+  font-size: clamp(0.5rem, 1.3vw, 0.57rem);
+  color: var(--muted);
+  padding: 0 16px 32px;
+  letter-spacing: 0.06em;
+  line-height: 1.8;
+}
+
+/* ══════════════════════════════════════
+   LOCATION PANEL — two-row structured grid
+══════════════════════════════════════ */
+.loc-panel {
+  margin: 10px 16px 0;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px 10px;
+}
+/* Row 1: city search full-width */
+.loc-row1 {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+/* Row 2: coordinates + metadata + actions — always inline, no wrapping */
+.loc-row2 {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: flex-end;
+}
+@media (max-width: 600px) {
+  .loc-row2 {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+  .loc-row2 .loc-tz   { grid-column: 1; }
+  .loc-row2 .loc-actions { grid-column: 1 / -1; display: flex; gap: 8px; }
+}
+.loc-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.loc-label {
+  font-family: var(--font-hd);
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.loc-input {
+  background: var(--surf3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: clamp(0.62rem, 1.6vw, 0.72rem);
+  padding: 7px 10px;
+  width: 100%;
+  transition: border-color 0.15s;
+  outline: none;
+  -webkit-appearance: none;
+}
+.loc-input:focus { border-color: var(--tab-accent); }
+.loc-input::placeholder { color: var(--muted); }
+
+/* Coordinate pair — always locked side by side */
+.loc-coord-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.loc-coord-pair .loc-label {
+  font-size: 0.48rem;
+}
+
+.loc-btn {
+  background: var(--surf3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--font-hd);
+  font-size: 0.54rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.loc-btn:hover  { border-color: var(--tab-accent); color: var(--tab-accent); }
+.loc-btn.primary {
+  background: var(--tab-accent);
+  border-color: var(--tab-accent);
+  color: #000;
+  font-weight: 700;
+}
+.loc-btn.primary:hover { opacity: 0.85; }
+.loc-btn:disabled { opacity: 0.4; cursor: default; }
+
+.loc-status {
+  font-size: 0.58rem;
+  padding: 5px 2px 0;
+  min-height: 16px;
+  transition: color 0.2s;
+}
+.loc-status.ok    { color: var(--s-noon); }
+.loc-status.err   { color: #f87171; }
+.loc-status.busy  { color: var(--muted); }
+
+/* Suggestions dropdown */
+.loc-suggestions {
+  position: absolute;
+  z-index: 400;
+  background: var(--surf3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  max-height: 200px;
+  overflow-y: auto;
+  min-width: 240px;
+}
+.loc-sug-item {
+  padding: 9px 12px;
+  font-size: 0.65rem;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(27,44,71,0.4);
+  color: var(--text);
+  line-height: 1.4;
+  transition: background 0.1s;
+}
+.loc-sug-item:last-child { border-bottom: none; }
+.loc-sug-item:hover, .loc-sug-item.focused { background: var(--border); color: #fff; }
+.loc-sug-item strong { color: #fff; }
+.loc-sug-item span   { color: var(--muted); font-size: 0.58rem; }
+
+.loc-wrap { position: relative; }
+
+/* TZ display badge */
+.tz-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surf3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 3px 9px;
+  font-size: 0.58rem;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.tz-badge span { color: var(--text); }
+
+/* Loading overlay for data rebuild */
+.rebuilding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5,8,15,0.7);
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  display: none;
+}
+.rebuilding-overlay.show { display: flex; }
+.rebuilding-box {
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px 36px;
+  text-align: center;
+  font-family: var(--font-hd);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--tab-accent);
+}
+.spin {
+  display: inline-block;
+  width: 20px; height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--tab-accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-bottom: 10px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════
+   MOON PHASE CALENDAR
+══════════════════════════════════════ */
+.moon-cal-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 640px;
+  font-size: clamp(0.48rem, 1.2vw, 0.58rem);
+}
+.moon-cal-table th {
+  font-family: var(--font-hd);
+  font-size: 0.5rem;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+  padding: 4px 2px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.moon-cal-table td {
+  padding: 2px 1px;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.1s;
+  position: relative;
+}
+.moon-cal-table td:hover { background: var(--surf3); }
+.moon-cal-table td.selected-day { outline: 2px solid var(--s-sel); outline-offset: -1px; border-radius: 3px; }
+.moon-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 3px 1px;
+}
+.moon-icon { font-size: clamp(0.9rem, 2.2vw, 1.2rem); line-height: 1; }
+.moon-day-num { font-size: 0.48rem; color: var(--muted); }
+.moon-illum { font-size: 0.46rem; color: var(--text); opacity: 0.7; }
+.moon-cal-month-label {
+  font-family: var(--font-hd);
+  font-size: 0.52rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+  padding: 8px 4px 2px;
+  text-align: left;
+}
+
+/* ══════════════════════════════════════
+   MOBILE TWEAKS
+══════════════════════════════════════ */
+@media (max-width: 480px) {
+  .tab-btn { padding: 10px 4px; }
+  .tab-btn .tab-icon { font-size: 1rem; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .arc-col { min-width: 0; width: 100%; }
+  #sharedArcCanvas { width: 100% !important; height: auto !important; }
+}
+/* ══════════════════════════════════════
+   PWA INSTALL BANNER
+══════════════════════════════════════ */
+#pwa-banner {
+  display: none;
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 700;
+  background: var(--surf2);
+  border: 1px solid var(--s-bmnt);
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 32px);
+  animation: slideUp 0.3s ease;
+}
+#pwa-banner.hidden { display: none !important; }
+@keyframes slideUp {
+  from { opacity:0; transform: translateX(-50%) translateY(20px); }
+  to   { opacity:1; transform: translateX(-50%) translateY(0); }
+}
+#pwa-banner .pwa-icon { font-size: 1.4rem; flex-shrink: 0; }
+#pwa-banner .pwa-text {
+  font-size: clamp(0.58rem, 1.5vw, 0.68rem);
+  color: var(--text);
+  line-height: 1.4;
+}
+#pwa-banner .pwa-text strong { color: #fff; }
+#pwa-banner .pwa-btns { display: flex; gap: 8px; flex-shrink: 0; }
+#pwa-install-btn {
+  background: var(--s-bmnt);
+  border: none;
+  border-radius: 4px;
+  color: #000;
+  font-family: var(--font-hd);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 7px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#pwa-dismiss-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 0.7rem;
+  padding: 6px 10px;
+  cursor: pointer;
+  line-height: 1;
+}
+#pwa-dismiss-btn:hover { color: var(--text); border-color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ APP HEADER ═══════════════════════ -->
+<div class="app-header">
+  <h1>Solar Intelligence Planner</h1>
+  <div class="sub">High Latitude Solar · Twilight · Photography</div>
+  <div class="coords" id="coordsBar">—</div>
+</div>
+
+<!-- ═══════════════════════ LOCATION PANEL ═══════════════════════ -->
+<div class="loc-panel">
+
+  <!-- Row 1: City search -->
+  <div class="loc-row1">
+    <div class="loc-group" style="flex:1">
+      <div class="loc-label">📍 Search City or Place</div>
+      <div class="loc-wrap" id="cityWrap">
+        <input class="loc-input" id="cityInput" type="text"
+          placeholder="e.g. Fairbanks, Tromsø, Reykjavik, Katmai…"
+          autocomplete="off" autocorrect="off" spellcheck="false">
+        <div class="loc-suggestions" id="citySuggestions" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Coordinates · Year · TZ · Actions -->
+  <div class="loc-row2">
+
+    <!-- Lat/Lon — always locked side by side as a pair -->
+    <div class="loc-group" style="grid-column:1/3">
+      <div class="loc-label">Coordinates (decimal degrees)</div>
+      <div class="loc-coord-pair">
+        <div>
+          <div class="loc-label" style="margin-bottom:3px">Latitude °N/S</div>
+          <input class="loc-input" id="latInput" type="number"
+            min="-90" max="90" step="0.0001" placeholder="64.3401">
+        </div>
+        <div>
+          <div class="loc-label" style="margin-bottom:3px">Longitude °E/W</div>
+          <input class="loc-input" id="lonInput" type="number"
+            min="-180" max="180" step="0.0001" placeholder="-149.19">
+        </div>
+      </div>
+    </div>
+
+    <!-- UTC offset display -->
+    <div class="loc-group loc-tz" style="min-width:140px">
+      <div class="loc-label">UTC Offset · Timezone</div>
+      <div class="loc-input" id="tzDisplay" style="cursor:default;color:var(--s-noon);font-size:0.65rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+        detecting…
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="loc-actions" style="display:flex;gap:6px;align-items:flex-end">
+      <button class="loc-btn primary" id="applyBtn" onclick="applyLocation()">Apply</button>
+      <button class="loc-btn" id="gpsBtn" onclick="useGPS()" title="Use device GPS">📡 GPS</button>
+    </div>
+
+  </div>
+
+  <!-- Status -->
+  <div class="loc-status" id="locStatus"></div>
+
+</div>
+
+<!-- Loading overlay -->
+<div class="rebuilding-overlay" id="rebuildOverlay">
+  <div class="rebuilding-box">
+    <div class="spin"></div><br>Computing solar data…
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB NAV ═══════════════════════ -->
+<nav class="tab-nav">
+  <button class="tab-btn active" id="tab-solar" onclick="switchTab('solar')" style="--tab-color:var(--s-bmnt)">
+    <span class="tab-icon">📡</span>
+    <span class="tab-label">Solar Analysis</span>
+  </button>
+  <button class="tab-btn" id="tab-photo" onclick="switchTab('photo')" style="--tab-color:var(--p-golden)">
+    <span class="tab-icon">📷</span>
+    <span class="tab-label">Photography Planner</span>
+  </button>
+  <button class="tab-btn" id="tab-moon" onclick="switchTab('moon')" style="--tab-color:#a78bfa">
+    <span class="tab-icon">🌙</span>
+    <span class="tab-label">Moon Data</span>
+  </button>
+</nav>
+
+<!-- ═══════════════════════ SHARED DATE PICKER ═══════════════════════ -->
+<div style="padding: 14px 14px 0">
+  <div class="picker-section" id="pickerSection">
+
+    <!-- Calendar -->
+    <div>
+      <div class="picker-col-label">Select Date</div>
+      <div class="cal-nav">
+        <button id="calPrev" aria-label="Previous month">◀</button>
+        <span class="cal-month-label" id="calLabel"></span>
+        <button id="calNext" aria-label="Next month">▶</button>
+        <input id="yearInput" type="number" min="2000" max="2099" step="1"
+          title="Year — press Enter to apply"
+          style="width:58px;background:var(--surf3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font);font-size:0.68rem;padding:3px 6px;text-align:center;outline:none;-webkit-appearance:none;">
+        <button id="calToday" aria-label="Jump to today" onclick="jumpToToday()" title="Jump to today" style="font-size:0.55rem;letter-spacing:0.08em;padding:3px 8px;font-family:var(--font-hd)">TODAY</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <!-- Day detail -->
+    <div class="day-detail">
+      <div class="picker-col-label" id="detailLabel">Day Summary</div>
+      <div class="day-detail-inner" id="dayDetailContent">
+        <div class="dd-placeholder">← Select a date or tap any chart<br>to see details for that day.</div>
+      </div>
+      <!-- Photo quality badge (only visible on photo tab) -->
+      <div class="quality-badge" id="qualBadge" style="display:none">
+        <div class="qb-label">Photo Quality Score</div>
+        <div class="qb-score" id="qbScore">—</div>
+        <div class="qb-sub" id="qbSub">Select a date</div>
+      </div>
+    </div>
+
+    <!-- Sun arc -->
+    <div class="arc-col">
+      <div class="picker-col-label">24h Altitude — ☀ Sun  🌙 Moon</div>
+      <canvas id="sharedArcCanvas" width="300" height="156"></canvas>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TAB 1: SOLAR ANALYSIS
+══════════════════════════════════════════════════ -->
+<div class="tab-content active" id="content-solar">
+
+  <div class="stats-row" id="solarStats"></div>
+
+  <div class="chart-wrap">
+    <div class="chart-title">I — Daily Light Window: BMNT · Sunrise · Solar Noon · Sunset · EENT</div>
+    <canvas id="sChart1" height="300"></canvas>
+    <div class="legend">
+      <div class="li"><div class="li-fill" style="background:#9b6fff"></div>Astro twilight</div>
+      <div class="li"><div class="li-fill" style="background:#60c5ff"></div>BMNT→Sunrise</div>
+      <div class="li"><div class="li-fill" style="background:#f5e642"></div>Full daylight</div>
+      <div class="li"><div class="li-fill" style="background:#ff7e42"></div>Sunset→EENT</div>
+      <div class="li"><div class="li-dash" style="border-color:#42e8c8"></div>Solar noon</div>
+      <div class="li"><div class="li-ln" style="background:#ff4fc8"></div>Selected</div>
+    </div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-title">II — Rate of Change in Daylight (minutes gained or lost per day)</div>
+    <canvas id="sChart3" height="190"></canvas>
+    <div class="legend">
+      <div class="li"><div class="li-ln" style="background:#42e8c8"></div>Gaining daylight</div>
+      <div class="li"><div class="li-ln" style="background:#ff7e42"></div>Losing daylight</div>
+      <div class="li"><div class="li-dash" style="border-color:#f5e642"></div>Solstice/equinox</div>
+      <div class="li"><div class="li-fill" style="background:#42e8c8;opacity:.25"></div>Peak rate windows</div>
+    </div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-title">III — Analemma: Solar Altitude vs. Azimuth at Solar Noon (full year figure-8)</div>
+    <canvas id="sChart4" height="300"></canvas>
+    <div class="legend">
+      <div class="li"><div class="li-ln" style="background:var(--s-elev)"></div>Sun position at solar noon</div>
+      <div class="li"><div class="li-fill" style="background:var(--s-sr);opacity:.7"></div>Summer half (Mar–Sep)</div>
+      <div class="li"><div class="li-fill" style="background:var(--s-bmnt);opacity:.7"></div>Winter half (Oct–Feb)</div>
+      <div class="li"><div class="li-sq" style="background:var(--s-sel)"></div>Selected date</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TAB 3: MOON DATA
+══════════════════════════════════════════════════ -->
+<div class="tab-content" id="content-moon">
+
+  <!-- Stats row -->
+  <div class="stats-row" id="moonStats"></div>
+
+  <!-- Day detail — top of page, immediately actionable -->
+  <div class="photo-windows" id="moonDayDetail">
+    <h4 style="color:#a78bfa">Selected Day — Moon Detail</h4>
+    <div style="color:var(--muted);font-size:.62rem">Select a date from the calendar or any chart below.</div>
+  </div>
+
+  <!-- Phase calendar -->
+  <div class="chart-wrap">
+    <div class="chart-title">I — Lunar Phase Calendar: Phase &amp; Illumination for Every Day of the Year</div>
+    <div id="moonCalGrid" style="overflow-x:auto"></div>
+  </div>
+
+  <!-- Lunar elevation (max daily) -->
+  <div class="chart-wrap">
+    <div class="chart-title">II — Daily Maximum Lunar Elevation (degrees above horizon at transit)</div>
+    <canvas id="mChart1" height="220"></canvas>
+    <div class="legend">
+      <div class="li"><div class="li-ln" style="background:#a78bfa"></div>Max lunar elevation</div>
+      <div class="li"><div class="li-fill" style="background:#a78bfa;opacity:.15"></div>Moon above horizon</div>
+      <div class="li"><div class="li-dash" style="border-color:#f0f9ff"></div>Full moon dates</div>
+      <div class="li"><div class="li-ln" style="background:var(--s-sel)"></div>Selected date</div>
+    </div>
+  </div>
+
+  <!-- Lunar distance / apogee / perigee / supermoon -->
+  <div class="chart-wrap">
+    <div class="chart-title">III — Lunar Distance: Perigee, Apogee &amp; Supermoon Threshold</div>
+    <canvas id="mChart3" height="220"></canvas>
+    <div class="legend">
+      <div class="li"><div class="li-ln" style="background:#c4b5fd"></div>Earth–Moon distance (km)</div>
+      <div class="li"><div class="li-dash" style="border-color:#f43f5e"></div>Supermoon threshold (≤362,000 km at full moon)</div>
+      <div class="li"><div class="li-sq" style="background:#f43f5e;opacity:.8"></div>Supermoon (full moon at perigee)</div>
+      <div class="li"><div class="li-sq" style="background:#a78bfa;opacity:.5"></div>Micromoon (full moon at apogee)</div>
+    </div>
+  </div>
+
+  <!-- Illumination + darkness overlap -->
+  <div class="chart-wrap">
+    <div class="chart-title">IV — Lunar Illumination &amp; Dark Sky Windows (for night photography)</div>
+    <canvas id="mChart2" height="200"></canvas>
+    <div class="legend">
+      <div class="li"><div class="li-ln" style="background:#f0f9ff;opacity:.9"></div>Illumination %</div>
+      <div class="li"><div class="li-sq" style="background:#1e1b4b;opacity:.9"></div>Astronomical darkness (sun &lt; −18°)</div>
+      <div class="li"><div class="li-sq" style="background:#7c3aed;opacity:.6"></div>Moonlit night &gt;50% illumination</div>
+    </div>
+  </div>
+
+</div>
+<div class="tab-content" id="content-photo">
+
+  <div class="stats-row" id="photoStats"></div>
+
+  <div class="chart-wrap">
+    <div class="chart-title">I — Annual Light Quality Map: Every Minute of Every Day by Sun Elevation</div>
+    <canvas id="pChart1" height="270"></canvas>
+    <div class="legend">
+      <div class="li"><div class="li-sq" style="background:#312e81"></div>Astro twilight (−18°→−12°)</div>
+      <div class="li"><div class="li-sq" style="background:#1d4ed8"></div>Blue hour (−12°→−6°)</div>
+      <div class="li"><div class="li-sq" style="background:#1e40af"></div>Civil twilight (−6°→0°)</div>
+      <div class="li"><div class="li-sq" style="background:#d97706"></div>Golden hour (0°→6°)</div>
+      <div class="li"><div class="li-sq" style="background:#9a3412"></div>Warm light (6°→12°)</div>
+      <div class="li"><div class="li-sq" style="background:#292524"></div>Overhead (&gt;12°)</div>
+      <div class="li"><div class="li-ln" style="background:#f43f5e"></div>Selected</div>
+    </div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-title">II — Daily Golden &amp; Blue Hour Duration + Photography Quality Index</div>
+    <canvas id="pChart2" height="185"></canvas>
+    <div class="legend">
+      <div class="li"><div class="li-sq" style="background:#d97706;opacity:.85"></div>Golden hour (min)</div>
+      <div class="li"><div class="li-sq" style="background:#1d4ed8;opacity:.85"></div>Blue hour (min)</div>
+      <div class="li"><div class="li-ln" style="background:#34d399"></div>Quality index (0–100)</div>
+    </div>
+  </div>
+
+  <div class="photo-windows" id="photoWindows">
+    <h4>Recommended Shoot Windows</h4>
+    <div style="color:var(--muted);font-size:.62rem">Select a date to see planned shoot windows.</div>
+  </div>
+
+</div>
+
+<div id="tooltip"></div>
+
+<footer>
+  BMNT = Begin Morning Nautical Twilight (sun −12°) · EENT = End Evening Nautical Twilight (sun −12°)<br>
+  Golden hour = sun 0°–6° · Blue hour = civil twilight −6°–0° · Times shown in selected UTC offset<br>
+  Solar calculations: NOAA algorithms. Quality index weights golden duration, blue hour, and elevation angle.<br>
+  City search powered by OpenStreetMap Nominatim. GPS uses browser geolocation API.
+</footer>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════════
+//  LOCATION STATE  — mutable, drives all calculations
+// ══════════════════════════════════════════════════════════════
+let LOC = {
+  lat:       64.3401,
+  lon:      -149.19,
+  ianaZone: 'America/Anchorage', // IANA tz name — drives all DST logic
+  year:      new Date().getFullYear(),
+  name:     'Clear SFS, Alaska',
+};
+
+// ══════════════════════════════════════════════════════════════
+//  TIMEZONE ENGINE
+//  Uses Intl.DateTimeFormat to get the exact UTC offset for any
+//  date in any IANA zone — handles DST, half-hours, everything.
+// ══════════════════════════════════════════════════════════════
+
+// Returns UTC offset in fractional hours for a specific UTC date in LOC.ianaZone
+function getOffset(date) {
+  try {
+    // We compare the same moment rendered in UTC vs the target zone,
+    // then compute the difference in minutes.
+    const utcParts = new Intl.DateTimeFormat('en', {
+      timeZone: 'UTC',
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', hour12: false
+    }).formatToParts(date);
+    const zoneParts = new Intl.DateTimeFormat('en', {
+      timeZone: LOC.ianaZone,
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', hour12: false
+    }).formatToParts(date);
+
+    const get = (parts, type) => parseInt(parts.find(p => p.type === type).value, 10);
+
+    const utcH = get(utcParts, 'hour'),   utcM = get(utcParts, 'minute');
+    const locH = get(zoneParts, 'hour'),  locM = get(zoneParts, 'minute');
+    const utcD = get(utcParts, 'day'),    locD = get(zoneParts, 'day');
+
+    let diffMin = (locH * 60 + locM) - (utcH * 60 + utcM);
+    // Account for day boundary crossings
+    if (locD !== utcD) {
+      const utcMon = get(utcParts, 'month'), locMon = get(zoneParts, 'month');
+      if (locD > utcD || (locMon > utcMon)) diffMin += 1440;
+      else diffMin -= 1440;
+    }
+    return diffMin / 60;
+  } catch {
+    // Fallback: estimate from longitude
+    return Math.round(LOC.lon / 15 * 2) / 2;
+  }
+}
+
+// Returns the current UTC offset as a formatted string like "UTC−09:00" or "UTC+05:30"
+function tzLabel(off) {
+  const sgn = off < 0 ? '−' : '+';
+  const absOff = Math.abs(off);
+  const h = String(Math.floor(absOff)).padStart(2,'0');
+  const m = String(Math.round((absOff % 1) * 60)).padStart(2,'0');
+  return `UTC ${sgn}${h}:${m}`;
+}
+
+// Lookup IANA timezone for lat/lon via TimeAPI (free, no key)
+async function fetchIANAZone(lat, lon) {
+  try {
+    const url = `https://timeapi.io/api/timezone/coordinate?latitude=${lat}&longitude=${lon}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.timeZone || null;
+  } catch { return null; }
+}
+
+function julianDay(ms) { return ms / 86400000 + 2440587.5; }
+
+function solarParams(jd) {
+  const n   = jd - 2451545.0;
+  const L   = (280.460 + 0.9856474 * n) % 360;
+  const g   = ((357.528 + 0.9856003 * n) % 360) * Math.PI / 180;
+  const lam = (L + 1.915 * Math.sin(g) + 0.020 * Math.sin(2*g)) * Math.PI / 180;
+  const eps = 23.439 * Math.PI / 180;
+  const dec = Math.asin(Math.sin(eps) * Math.sin(lam));
+  const y   = Math.tan(eps/2) ** 2;
+  const L0r = L * Math.PI / 180;
+  const e   = 0.016708634;
+  const eot = (y*Math.sin(2*L0r) - 2*e*Math.sin(g) + 4*e*y*Math.sin(g)*Math.cos(2*L0r)
+    - 0.5*y*y*Math.sin(4*L0r) - 1.25*e*e*Math.sin(2*g)) * 4 * 180/Math.PI;
+  return { dec, noonUTC: 720 - 4*LOC.lon - eot };
+}
+
+function eventTimes(jd, depression) {
+  const { dec, noonUTC } = solarParams(jd);
+  const latR  = LOC.lat * Math.PI/180;
+  const cosHA = (Math.cos((90 + depression) * Math.PI/180) - Math.sin(latR)*Math.sin(dec))
+              / (Math.cos(latR)*Math.cos(dec));
+  if (cosHA <= -1) return { rise:null, set:null, polar:'day',   noonUTC };
+  if (cosHA >=  1) return { rise:null, set:null, polar:'night', noonUTC };
+  const ha = Math.acos(cosHA) * 180/Math.PI * 4;
+  return { rise: noonUTC - ha, set: noonUTC + ha, polar:null, noonUTC };
+}
+
+function sunAlt(jd, utcMin) {
+  const { dec, noonUTC } = solarParams(jd);
+  const haR  = ((utcMin - noonUTC) / 4) * Math.PI/180;
+  const latR = LOC.lat * Math.PI/180;
+  return Math.asin(Math.max(-1, Math.min(1,
+    Math.sin(latR)*Math.sin(dec) + Math.cos(latR)*Math.cos(dec)*Math.cos(haR)
+  ))) * 180/Math.PI;
+}
+
+function maxElevation(jd) {
+  const { dec } = solarParams(jd);
+  return 90 - Math.abs(LOC.lat - dec * 180/Math.PI);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SOLAR MATH  (NOAA)  — uses LOC object, not hard constants
+// ══════════════════════════════════════════════════════════════
+
+function toLocal(utcMin, off) { return (utcMin + off * 60 + 4320) % 1440; }
+
+function elevCat(el) {
+  if (el < -18) return 'night';
+  if (el < -12) return 'astro';
+  if (el < -6)  return 'blueDeep';
+  if (el < 0)   return 'blue';
+  if (el < 6)   return 'golden';
+  if (el < 12)  return 'warm';
+  return 'harsh';
+}
+
+const CAT_COLOR = {
+  night:'rgba(0,0,0,0)', astro:'rgba(49,46,129,0.85)',
+  blueDeep:'rgba(30,64,175,0.85)', blue:'rgba(37,99,168,0.85)',
+  golden:'rgba(217,119,6,0.9)', warm:'rgba(154,52,18,0.85)', harsh:'rgba(41,37,36,0.7)'
+};
+const CAT_DISPLAY = {
+  astro:    { label:'Astronomical Twilight', color:'#4f46e5', note:'Deep blue, stars visible, silhouettes' },
+  blueDeep: { label:'Nautical Blue Hour',    color:'#3b82f6', note:'Rich blue tones, no direct sun' },
+  blue:     { label:'Civil Blue Hour',       color:'#60a5fa', note:'Even blue light, reflections, landscape' },
+  golden:   { label:'Golden Hour',           color:'#f59e0b', note:'Warm raking light, long shadows — prime time' },
+  warm:     { label:'Warm Light',            color:'#fb923c', note:'Good warm directional light, less dramatic' },
+  harsh:    { label:'Overhead / Harsh',      color:'#6b7280', note:'Challenging — use for abstract or overcast' }
+};
+
+// ══════════════════════════════════════════════════════════════
+//  BUILD UNIFIED DATA ARRAY
+// ══════════════════════════════════════════════════════════════
+function buildData() {
+  const rows = [];
+  const yr   = LOC.year;
+  const daysInYear = new Date(yr+1,0,1) - new Date(yr,0,1) > 365*86400000 ? 366 : 365;
+
+  for (let doy = 0; doy < daysInYear; doy++) {
+    const date = new Date(Date.UTC(yr,0,1+doy));
+    const jd   = julianDay(date.getTime());
+    const off  = getOffset(date);
+    const toL  = m => m == null ? null : toLocal(m, off);
+
+    const sr  = eventTimes(jd, 0.833);
+    const civ = eventTimes(jd, 6);
+    const nau = eventTimes(jd, 12);
+    const ast = eventTimes(jd, 18);
+    const { noonUTC } = solarParams(jd);
+
+    const daylight = sr.polar==='day' ? 24 : sr.polar==='night' ? 0 : (sr.set-sr.rise)/60;
+    const usable   = nau.polar==='day' ? 24 : nau.polar==='night' ? 0 : (nau.set-nau.rise)/60;
+
+    // Light quality durations (sample every 2 min)
+    let goldenMin=0, blueMin=0, warmMin=0;
+    const STEP = 2;
+    for (let u=0; u<1440; u+=STEP) {
+      const cat = elevCat(sunAlt(jd, u));
+      if (cat==='golden') goldenMin+=STEP;
+      else if (cat==='blue'||cat==='blueDeep') blueMin+=STEP;
+      else if (cat==='warm') warmMin+=STEP;
+    }
+
+    // Photo quality score
+    let score;
+    if (sr.polar==='night' || daylight<0.5) score=0;
+    else if (sr.polar==='day') {
+      const me = maxElevation(jd);
+      score = me<10 ? 85 : me<20 ? 75 : 60;
+    } else {
+      const harshHrs = Math.max(0, daylight-(goldenMin+blueMin+warmMin)/60);
+      score = Math.min(100, Math.max(0, Math.round(
+        Math.min(goldenMin/1.2,60) + Math.min(blueMin/3,25) - harshHrs*3 + 15
+      )));
+    }
+
+    // Golden hour endpoints
+    let mornGoldEndUtc=null, eveGoldStartUtc=null;
+    if (sr.polar!=='day' && sr.polar!=='night' && sr.rise!=null) {
+      for (let u=sr.rise; u<noonUTC; u+=2) { if (sunAlt(jd,u)>6) { mornGoldEndUtc=u; break; } }
+      for (let u=noonUTC; u<sr.set; u+=2)  { if (sunAlt(jd,u)<6) { eveGoldStartUtc=u; break; } }
+    }
+
+    rows.push({
+      date, doy, off, jd,
+      sunrise:     toL(sr.rise),
+      sunset:      toL(sr.set),
+      civilRise:   toL(civ.rise),
+      civilSet:    toL(civ.set),
+      bmnt:        toL(nau.rise),
+      eent:        toL(nau.set),
+      astRise:     toL(ast.rise),
+      astSet:      toL(ast.set),
+      noon:        toL(noonUTC),
+      noonUTC,
+      daylight, usable,
+      goldenMin, blueMin, warmMin, score,
+      maxElev:     maxElevation(jd),
+      polarDay:    sr.polar==='day',
+      polarNight:  sr.polar==='night',
+      nauPolarDay: nau.polar==='day',
+      nauPolarNight: nau.polar==='night',
+      mornGoldEnd:   toL(mornGoldEndUtc),
+      eveGoldStart:  toL(eveGoldStartUtc),
+    });
+  }
+  // Rate of change
+  const N = rows.length;
+  for (let i=0; i<N; i++) {
+    const a = rows[Math.max(0,i-1)].daylight;
+    const b = rows[Math.min(N-1,i+1)].daylight;
+    rows[i].rate = (b-a)*60/2;
+  }
+  return rows;
+}
+
+let data = buildData();
+
+// ══════════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════════
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MFULL  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+let MONTH_STARTS = [];
+
+function rebuildMonthStarts() {
+  MONTH_STARTS = [];
+  const yr = LOC.year;
+  for (let m=0; m<12; m++)
+    MONTH_STARTS.push(Math.round((new Date(Date.UTC(yr,m,1)) - new Date(Date.UTC(yr,0,1))) / 86400000));
+}
+rebuildMonthStarts();
+
+function minToStr(m) {
+  if (m==null) return '—';
+  const h=Math.floor(m/60)%24, mn=Math.floor(m%60);
+  return `${h%12||12}:${String(mn).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
+}
+function fmtHrs(h) { const hh=Math.floor(h),mm=Math.round((h-hh)*60); return `${hh}h ${String(mm).padStart(2,'0')}m`; }
+function fmtDur(min) { if(min<=0)return'0m'; const h=Math.floor(min/60),m=Math.round(min%60); return h>0?`${h}h ${m}m`:`${m}m`; }
+function fmtRate(r) { return `${r>=0?'+':''}${r.toFixed(1)} min/day`; }
+function scoreLabel(s) {
+  if(s>=85)return'EXCEPTIONAL'; if(s>=70)return'EXCELLENT'; if(s>=55)return'VERY GOOD';
+  if(s>=40)return'GOOD'; if(s>=25)return'FAIR'; if(s>=10)return'POOR'; return'NO LIGHT';
+}
+function scoreColor(s) {
+  if(s>=85)return'#f59e0b'; if(s>=70)return'#fb923c'; if(s>=55)return'#34d399';
+  if(s>=40)return'#60a5fa'; if(s>=25)return'#94a3b8'; return'#4b5563';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SHARED STATE
+// ══════════════════════════════════════════════════════════════
+// Default to today if it falls within the selected year
+const _today = new Date();
+const _todayYear = _today.getFullYear();
+let selectedDoy = (_todayYear === LOC.year)
+  ? Math.round((new Date(Date.UTC(_todayYear, _today.getMonth(), _today.getDate())) - new Date(Date.UTC(_todayYear,0,1))) / 86400000)
+  : 0;
+let calMonth = data[selectedDoy].date.getUTCMonth();
+let activeTab   = 'solar';
+
+// ══════════════════════════════════════════════════════════════
+//  TAB SWITCHING
+// ══════════════════════════════════════════════════════════════
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('content-'+tab).classList.add('active');
+
+  const accent = tab==='solar' ? 'var(--s-bmnt)' : tab==='photo' ? 'var(--p-golden)' : '#a78bfa';
+  document.documentElement.style.setProperty('--tab-accent', accent);
+
+  const badge = document.getElementById('qualBadge');
+  badge.style.display = tab==='photo' ? 'block' : 'none';
+  document.getElementById('detailLabel').textContent =
+    tab==='photo' ? 'Day Summary + Quality' : tab==='moon' ? 'Day Summary' : 'Day Summary';
+
+  renderAllCharts();
+  if (selectedDoy != null) updateDayDetail(selectedDoy);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STATS ROWS
+// ══════════════════════════════════════════════════════════════
+function buildStats() {
+  const maxDay  = data.reduce((a,b)=>b.daylight>a.daylight?b:a);
+  const minDay  = data.reduce((a,b)=>b.daylight<a.daylight?b:a);
+  const maxEl   = data.reduce((a,b)=>b.maxElev>a.maxElev?b:a);
+  const minEl   = data.reduce((a,b)=>b.maxElev<a.maxElev?b:a);
+  const maxRate = data.reduce((a,b)=>b.rate>a.rate?b:a);
+  const minRate = data.reduce((a,b)=>b.rate<a.rate?b:a);
+  const msCount = data.filter(d=>d.polarDay).length;
+  const msFirst = data.find(d=>d.polarDay);
+  const msLast  = [...data].reverse().find(d=>d.polarDay);
+
+  const sc = (v,l,s,a) => `<div class="stat-card" style="--accent:${a}">
+    <div class="stat-val">${v}</div><div class="stat-lbl">${l}</div><div class="stat-sub">${s}</div></div>`;
+
+  document.getElementById('solarStats').innerHTML =
+    sc(fmtHrs(maxDay.daylight),'Max Daylight', msFirst?'Midnight Sun Season':MONTHS[maxDay.date.getUTCMonth()]+' '+maxDay.date.getUTCDate(), '#f5e642') +
+    sc(fmtHrs(minDay.daylight),'Min Daylight', MONTHS[minDay.date.getUTCMonth()]+' '+minDay.date.getUTCDate(), '#3d5870') +
+    sc(maxEl.maxElev.toFixed(1)+'°','Peak Elevation','Summer solstice','#c084fc') +
+    sc(minEl.maxElev.toFixed(1)+'°','Min Elevation','Winter solstice','#60c5ff') +
+    sc(fmtRate(maxRate.rate),'Peak Gain Rate',MONTHS[maxRate.date.getUTCMonth()]+' '+maxRate.date.getUTCDate(),'#42e8c8') +
+    sc(fmtRate(minRate.rate),'Peak Loss Rate',MONTHS[minRate.date.getUTCMonth()]+' '+minRate.date.getUTCDate(),'#ff7e42') +
+    sc(msCount>0?msCount+' days':'—','Midnight Sun',msFirst?`${MONTHS[msFirst.date.getUTCMonth()]} ${msFirst.date.getUTCDate()} – ${MONTHS[msLast.date.getUTCMonth()]} ${msLast.date.getUTCDate()}`:'—','#f5c030') +
+    sc(data.filter(d=>d.nauPolarDay).length+' days','Naut. Twilight 24h','BMNT/EENT merged','#60c5ff');
+
+  const bestDay  = data.reduce((a,b)=>b.score>a.score?b:a);
+  const worstDay = data.filter(d=>d.score>0).reduce((a,b)=>b.score<a.score?b:a);
+  const maxGold  = data.reduce((a,b)=>b.goldenMin>a.goldenMin?b:a);
+  const maxBlue  = data.reduce((a,b)=>b.blueMin>a.blueMin?b:a);
+
+  document.getElementById('photoStats').innerHTML =
+    sc(bestDay.score+'/100','Best Photo Day',scoreLabel(bestDay.score)+' · '+MONTHS[bestDay.date.getUTCMonth()]+' '+bestDay.date.getUTCDate(),scoreColor(bestDay.score)) +
+    sc(fmtDur(maxGold.goldenMin),'Peak Golden Hr',MONTHS[maxGold.date.getUTCMonth()]+' '+maxGold.date.getUTCDate(),'#f59e0b') +
+    sc(fmtDur(maxBlue.blueMin),'Peak Blue Hour',MONTHS[maxBlue.date.getUTCMonth()]+' '+maxBlue.date.getUTCDate(),'#60a5fa') +
+    sc(maxEl.maxElev.toFixed(1)+'°','Peak Sun Angle','Summer solstice','#c084fc') +
+    sc(minEl.maxElev.toFixed(1)+'°','Min Sun Angle','Winter solstice','#60a5fa') +
+    sc(msCount>0?msCount+' days':'—','Midnight Sun',msFirst?`${MONTHS[msFirst.date.getUTCMonth()]} ${msFirst.date.getUTCDate()} – ${MONTHS[msLast.date.getUTCMonth()]} ${msLast.date.getUTCDate()}`:'—','#f59e0b');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CALENDAR
+// ══════════════════════════════════════════════════════════════
+function buildCalendar() {
+  const grid = document.getElementById('calGrid');
+  document.getElementById('calLabel').textContent = MFULL[calMonth]+' '+LOC.year;
+  grid.innerHTML = '';
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => {
+    const el=document.createElement('div'); el.className='cal-hdr'; el.textContent=d; grid.appendChild(el);
+  });
+  const first = new Date(Date.UTC(LOC.year,calMonth,1)).getUTCDay();
+  const days  = new Date(Date.UTC(LOC.year,calMonth+1,0)).getUTCDate();
+  for (let i=0;i<first;i++) {
+    const el=document.createElement('div'); el.className='cal-cell empty'; grid.appendChild(el);
+  }
+  for (let day=1;day<=days;day++) {
+    const doy = Math.round((new Date(Date.UTC(LOC.year,calMonth,day))-new Date(Date.UTC(LOC.year,0,1)))/86400000);
+    const d   = data[doy];
+    const el  = document.createElement('div');
+    el.className = 'cal-cell';
+    el.textContent = day;
+    if (d.polarDay)   el.classList.add('polar-day');
+    if (d.polarNight) el.classList.add('polar-night');
+    if (d.score>=70)  el.classList.add('gold-day');
+    if (selectedDoy===doy) el.classList.add('selected');
+    el.addEventListener('click', ()=>{ selectDate(doy); });
+    grid.appendChild(el);
+  }
+}
+document.getElementById('calPrev').addEventListener('click', ()=>{ calMonth=(calMonth+11)%12; buildCalendar(); });
+document.getElementById('calNext').addEventListener('click', ()=>{ calMonth=(calMonth+1)%12; buildCalendar(); });
+
+function jumpToToday() {
+  const today = new Date();
+  if (today.getFullYear() !== LOC.year) {
+    setStatus(`Today is ${today.getFullYear()} — current view is ${LOC.year}. Change the year to jump to today.`, 'err');
+    return;
+  }
+  const doy = Math.round((new Date(Date.UTC(LOC.year, today.getMonth(), today.getDate())) - new Date(Date.UTC(LOC.year, 0, 1))) / 86400000);
+  selectDate(Math.min(doy, data.length - 1));
+}
+
+function selectDate(doy) {
+  selectedDoy = doy;
+  calMonth = data[doy].date.getUTCMonth();
+  buildCalendar();
+  updateDayDetail(doy);
+  if (activeTab === 'moon') updateMoonDayDetail(doy);
+  updateTzDisplay(data[doy].date);
+  updateCoordsBar();
+  renderAllCharts();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  DAY DETAIL (shared panel, context-sensitive)
+// ══════════════════════════════════════════════════════════════
+function updateDayDetail(doy) {
+  const d   = data[doy];
+  const mon = MFULL[d.date.getUTCMonth()];
+  const day = d.date.getUTCDate();
+  const tz  = tzLabel(d.off);
+  const el  = document.getElementById('dayDetailContent');
+
+  const row = (k,v,c) =>
+    `<div class="dd-row"><span class="dd-key">${k}</span><span class="dd-val" style="color:${c||'#fff'}">${v}</span></div>`;
+
+  let html = `<div class="dd-date">${mon} ${day}, 2026 · ${tz}</div>`;
+
+  if (activeTab==='solar') {
+    if (d.polarDay) {
+      html += row('Status','☀ Midnight Sun','#f5e642');
+      html += row('Usable Light','24 hours','#f5e642');
+      html += row('Max Elevation',d.maxElev.toFixed(1)+'°','#c084fc');
+      html += row('Δ Daylight',fmtRate(d.rate),d.rate>=0?'#42e8c8':'#ff7e42');
+    } else if (d.polarNight) {
+      html += row('Status','● Polar Night','#3d5870');
+      html += row('Max Elevation',d.maxElev.toFixed(1)+'°','#c084fc');
+      html += row('Δ Daylight',fmtRate(d.rate),'#3d5870');
+    } else {
+      if (d.bmnt)    html += row('BMNT',    minToStr(d.bmnt),    '#60c5ff');
+      if (d.sunrise) html += row('Sunrise', minToStr(d.sunrise), '#f5e642');
+      if (d.noon)    html += row('S. Noon', minToStr(d.noon),    '#42e8c8');
+      if (d.sunset)  html += row('Sunset',  minToStr(d.sunset),  '#f5c030');
+      if (d.eent)    html += row('EENT',    minToStr(d.eent),    '#ff7e42');
+      html += row('Daylight',       fmtHrs(d.daylight), '#f5e642');
+      html += row('Usable (BMNT→EENT)', fmtHrs(d.usable), '#60c5ff');
+      html += row('Max Elevation',  d.maxElev.toFixed(1)+'°', '#c084fc');
+      html += row('Δ Daylight',     fmtRate(d.rate), d.rate>=0?'#42e8c8':'#ff7e42');
+    }
+  } else {
+    // Photo tab
+    if (d.polarDay) {
+      html += row('Status','☀ Midnight Sun','#f59e0b');
+      html += row('Golden Duration',fmtDur(d.goldenMin),'#f59e0b');
+      html += row('Blue Hour',fmtDur(d.blueMin),'#60a5fa');
+      html += row('Max Elevation',d.maxElev.toFixed(1)+'°','#c084fc');
+    } else if (d.polarNight) {
+      html += row('Status','● Polar Night','#4b5563');
+      html += row('Max Elevation',d.maxElev.toFixed(1)+'°','#c084fc');
+    } else {
+      if (d.bmnt)           html += row('BMNT / Blue Hr AM', minToStr(d.bmnt),   '#60a5fa');
+      if (d.sunrise)        html += row('Sunrise',           minToStr(d.sunrise),'#f59e0b');
+      if (d.mornGoldEnd)    html += row('Golden Hr End AM',  minToStr(d.mornGoldEnd),'#f59e0b');
+      if (d.eveGoldStart)   html += row('Golden Hr Start PM',minToStr(d.eveGoldStart),'#f59e0b');
+      if (d.sunset)         html += row('Sunset',            minToStr(d.sunset), '#fb923c');
+      if (d.eent)           html += row('EENT / Blue Hr PM', minToStr(d.eent),   '#60a5fa');
+      html += row('Golden Duration', fmtDur(d.goldenMin), '#f59e0b');
+      html += row('Blue Hr Total',   fmtDur(d.blueMin),   '#60a5fa');
+      html += row('Max Elevation',   d.maxElev.toFixed(1)+'°', '#c084fc');
+    }
+    // Quality badge
+    document.getElementById('qbScore').textContent = d.score;
+    document.getElementById('qbScore').style.color = scoreColor(d.score);
+    document.getElementById('qbSub').textContent = scoreLabel(d.score);
+    buildPhotoWindows(d);
+  }
+
+  el.innerHTML = html;
+  drawArc(doy);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PHOTO WINDOWS
+// ══════════════════════════════════════════════════════════════
+function buildPhotoWindows(d) {
+  const pw = document.getElementById('photoWindows');
+  const windows = [];
+
+  if (d.polarNight) {
+    pw.innerHTML = '<h4>Recommended Shoot Windows</h4><div style="color:var(--muted);font-size:.62rem">No sunlight available. Consider aurora or moonscape work.</div>';
+    return;
+  }
+  if (d.polarDay) {
+    windows.push({ color:'#4f46e5', time:'~11 PM – 2 AM', dur:'~3h', label:'Midnight Sun Twilight', desc:'Lowest sun angle of the day. Long shadows, warmest golden tones. Best landscape window.' });
+    windows.push({ color:'#f59e0b', time:'6–9 AM · 6–9 PM', dur:'3h each', label:'Low-Angle Golden Windows', desc:'Sun at 10–25°. Warm directional light. Look for terrain to work sun against. Wildlife active.' });
+  } else {
+    const pairs = [
+      [d.astRise,  d.bmnt,       '#4f46e5', 'Astro Twilight AM',   'Deep blue, stars fading. Silhouettes, Milky Way transitions.'],
+      [d.bmnt,     d.civilRise,  '#3b82f6', 'Blue Hour — Nautical AM', 'Rich even blue tones. Long exposures, water reflections, mountain landscape.'],
+      [d.civilRise,d.sunrise,    '#60a5fa', 'Blue Hour — Civil AM', 'Sky brightening, first warm horizon colors. Set up compositions before this starts.'],
+      [d.sunrise,  d.mornGoldEnd,'#f59e0b', 'Golden Hour AM',       'Sun 0–6°. Warm raking light, long shadows. Prime landscape window.'],
+      [d.eveGoldStart,d.sunset,  '#f59e0b', 'Golden Hour PM',       'Best warm light on south-facing terrain. Wildlife, tundra texture, mountain glow.'],
+      [d.sunset,   d.civilSet,   '#60a5fa', 'Blue Hour — Civil PM', 'Afterglow on clouds and peaks. Often most dramatic sky colors of the day.'],
+      [d.civilSet, d.eent,       '#3b82f6', 'Blue Hour — Nautical PM', 'Deep blue twilight. Still-water reflections. Mountain silhouettes.'],
+    ];
+    for (const [start, end, color, label, desc] of pairs) {
+      if (start==null || end==null) continue;
+      const dur = fmtDur((end-start+1440)%1440);
+      windows.push({ color, time: minToStr(start)+' – '+minToStr(end), dur, label, desc });
+    }
+  }
+
+  if (!windows.length) { pw.innerHTML = '<h4>Recommended Shoot Windows</h4><div style="color:var(--muted);font-size:.62rem">No quality windows today.</div>'; return; }
+  pw.innerHTML = '<h4>Recommended Shoot Windows</h4>' + windows.map(w =>
+    `<div class="pw">
+      <div class="pw-dot" style="background:${w.color}"></div>
+      <div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:2px">
+          <span class="pw-time">${w.time}</span>
+          <span class="pw-dur">${w.dur}</span>
+        </div>
+        <div class="pw-label" style="color:${w.color};font-size:.61rem">${w.label}</div>
+        <div class="pw-desc" style="font-size:.6rem">${w.desc}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SUN ARC DIAGRAM
+//  X axis = hour angle (noon at center, E=left, W=right)
+//  Y axis = solar altitude in degrees (0° = horizon at bottom)
+//  This is an altitude/hour-angle plot — accurate and readable.
+// ══════════════════════════════════════════════════════════════
+function drawArc(doy) {
+  const canvas = document.getElementById('sharedArcCanvas');
+  if (!canvas) return;
+  const DPR = window.devicePixelRatio || 1;
+
+  const dispW = Math.max(canvas.offsetWidth, 200);
+  const dispH = Math.round(dispW * 0.52);
+  canvas.width        = dispW * DPR;
+  canvas.height       = dispH * DPR;
+  canvas.style.height = dispH + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR, DPR);
+  const W = dispW, H = dispH;
+  ctx.clearRect(0, 0, W, H);
+
+  const PAD = { t: 14, r: 38, b: 26, l: 34 };
+  const CW  = W - PAD.l - PAD.r;
+  const CH  = H - PAD.t - PAD.b;
+
+  // X: local minutes 0-1440 (midnight to midnight)
+  const xOfMin = m => PAD.l + ((m % 1440) / 1440) * CW;
+
+  if (doy == null || !data[doy]) {
+    ctx.fillStyle = 'rgba(61,88,112,0.5)';
+    ctx.font = '10px IBM Plex Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText('Select a date', W/2, H/2);
+    ctx.textAlign = 'left';
+    return;
+  }
+
+  const d   = data[doy];
+  // Moon overlay only on the Moon Data tab
+  const md  = (activeTab === 'moon' && moonData && moonData[doy]) ? moonData[doy] : null;
+  const off = d.off;
+
+  // Altitude range — only include moon max when moon is shown
+  const maxMoonEl = md ? md.maxMoonElev : -90;
+  const ALT_MAX   = Math.max(d.maxElev, maxMoonEl, 15) + 6;
+  const ALT_MIN   = -20;
+  const yOfAlt    = alt => PAD.t + CH - ((alt - ALT_MIN) / (ALT_MAX - ALT_MIN)) * CH;
+  const yHorizon  = yOfAlt(0);
+
+  // ── Precompute solar altitude helper ──
+  const { dec: sDec, noonUTC } = solarParams(d.jd);
+  const latR = LOC.lat * Math.PI / 180;
+  function sunAltLocal(lm) {
+    const utcMin = (lm - off * 60 + 4320 * 4) % 1440;
+    const haR = ((utcMin - noonUTC) / 4) * Math.PI / 180;
+    return Math.asin(Math.max(-1, Math.min(1,
+      Math.sin(latR)*Math.sin(sDec) + Math.cos(latR)*Math.cos(sDec)*Math.cos(haR)
+    ))) * 180 / Math.PI;
+  }
+
+  // ── Background twilight bands by solar elevation ──
+  const BAND = {
+    night:'rgba(5,8,15,0.95)', astro:'rgba(18,12,55,0.88)',
+    blueDeep:'rgba(18,32,88,0.78)', blue:'rgba(22,52,115,0.62)',
+    golden:'rgba(95,50,4,0.48)', warm:'rgba(75,38,4,0.32)', harsh:'rgba(45,45,18,0.22)'
+  };
+  const BSTEP = 4;
+  for (let lm = 0; lm < 1440; lm += BSTEP) {
+    const cat = elevCat(sunAltLocal(lm));
+    const x1 = xOfMin(lm), x2 = xOfMin(lm + BSTEP);
+    ctx.fillStyle = BAND[cat] || BAND.night;
+    ctx.fillRect(x1, PAD.t, x2 - x1 + 0.5, CH);
+  }
+  ctx.setLineDash([2, 5]);
+  for (let el = Math.ceil(ALT_MIN/10)*10; el <= ALT_MAX; el += 10) {
+    const y = yOfAlt(el), isH = el === 0;
+    ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(PAD.l+CW, y);
+    ctx.strokeStyle = isH ? 'rgba(96,197,255,0.6)' : 'rgba(27,44,71,0.55)';
+    ctx.lineWidth   = isH ? 1.5 : 0.8;
+    ctx.stroke();
+    ctx.fillStyle = isH ? 'rgba(96,197,255,0.7)' : 'rgba(61,88,112,0.65)';
+    ctx.font = '8px IBM Plex Mono';
+    ctx.textAlign = 'right';
+    ctx.fillText(el + '°', PAD.l - 3, y + 3);
+    ctx.textAlign = 'left';
+  }
+  ctx.setLineDash([]);
+
+  // Horizon label
+  ctx.fillStyle = 'rgba(96,197,255,0.45)';
+  ctx.font = '7px IBM Plex Mono';
+  ctx.fillText('HORIZON', PAD.l + 3, yOfAlt(0) - 3);
+
+  // ── X axis: clock time labels every 3h ──
+  ctx.textAlign = 'center';
+  for (let h = 0; h <= 24; h += 3) {
+    const x = xOfMin(h * 60);
+    if (x < PAD.l || x > PAD.l + CW) continue;
+    ctx.beginPath(); ctx.moveTo(x, PAD.t); ctx.lineTo(x, PAD.t+CH);
+    ctx.strokeStyle = h===12 ? 'rgba(66,232,200,0.18)' : 'rgba(27,44,71,0.4)';
+    ctx.lineWidth = 0.8; ctx.stroke();
+    const lbl = h===0||h===24?'12AM':h===12?'12PM':h>12?`${h-12}PM`:`${h}AM`;
+    ctx.fillStyle = h===12 ? 'rgba(66,232,200,0.5)' : 'rgba(61,88,112,0.6)';
+    ctx.font = '8px IBM Plex Mono';
+    ctx.fillText(lbl, x, PAD.t+CH+16);
+  }
+  ctx.textAlign = 'left';
+
+  // ── Clip for curves ──
+  ctx.save();
+  ctx.beginPath(); ctx.rect(PAD.l, PAD.t, CW, CH); ctx.clip();
+
+  // ── Solar curve — colored by light quality ──
+  const sunPts = [];
+  for (let lm = 0; lm < 1440; lm += 2) sunPts.push({ lm, alt: sunAltLocal(lm) });
+
+  for (let i = 1; i < sunPts.length; i++) {
+    const p = sunPts[i-1], q = sunPts[i], avg = (p.alt+q.alt)/2;
+    let col;
+    if (activeTab === 'photo') {
+      col = CAT_DISPLAY[elevCat(avg)]?.color || 'rgba(61,88,112,0.5)';
+    } else {
+      if      (avg < -18) col = 'rgba(0,0,0,0)';
+      else if (avg < -12) col = 'rgba(75,55,175,0.7)';
+      else if (avg < -6)  col = 'rgba(28,78,196,0.8)';
+      else if (avg < 0)   col = 'rgba(38,118,196,0.85)';
+      else if (avg < 6)   col = 'rgba(245,175,55,0.92)';
+      else if (avg < 12)  col = 'rgba(245,208,75,0.88)';
+      else                col = 'rgba(245,228,60,0.82)';
+    }
+    ctx.beginPath();
+    ctx.moveTo(xOfMin(p.lm), yOfAlt(p.alt));
+    ctx.lineTo(xOfMin(q.lm), yOfAlt(q.alt));
+    ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.stroke();
+  }
+
+  // ── Lunar curve ──
+  if (md) {
+    const moonPts = [];
+    for (let lm = 0; lm < 1440; lm += 4) {
+      const utcMin = (lm - off*60 + 4320*4) % 1440;
+      moonPts.push({ lm, alt: moonAlt(d.jd, utcMin) });
+    }
+    // Draw in above/below segments
+    let seg = [], wasAbove = moonPts[0].alt >= 0;
+    const drawSeg = (pts, above) => {
+      if (pts.length < 2) return;
+      ctx.beginPath();
+      pts.forEach((p,i) => i===0 ? ctx.moveTo(xOfMin(p.lm), yOfAlt(p.alt)) : ctx.lineTo(xOfMin(p.lm), yOfAlt(p.alt)));
+      ctx.strokeStyle = above ? 'rgba(167,139,250,0.92)' : 'rgba(124,58,237,0.38)';
+      ctx.lineWidth   = above ? 2.0 : 1.2;
+      ctx.setLineDash(above ? [] : [4, 4]);
+      ctx.stroke(); ctx.setLineDash([]);
+    };
+    for (const p of moonPts) {
+      const above = p.alt >= 0;
+      if (above !== wasAbove) { drawSeg(seg, wasAbove); seg = [seg[seg.length-1]]; wasAbove = above; }
+      seg.push(p);
+    }
+    drawSeg(seg, wasAbove);
+
+    // Moon peak dot
+    const mp = moonPts.reduce((a,b) => b.alt > a.alt ? b : a);
+    if (mp.alt > ALT_MIN) {
+      ctx.beginPath(); ctx.arc(xOfMin(mp.lm), yOfAlt(mp.alt), 4, 0, Math.PI*2);
+      ctx.fillStyle = '#a78bfa'; ctx.shadowBlur = 8; ctx.shadowColor = '#a78bfa'; ctx.fill(); ctx.shadowBlur = 0;
+      if (mp.alt > 0) {
+        ctx.fillStyle = '#a78bfa'; ctx.font = 'bold 8px IBM Plex Mono'; ctx.textAlign = 'center';
+        ctx.fillText(mp.alt.toFixed(1)+'°', xOfMin(mp.lm), yOfAlt(mp.alt)-8);
+        ctx.textAlign = 'left';
+      }
+    }
+
+    // Moonrise/set tick marks on horizon
+    [[md.moonrise,'rgba(167,139,250,0.9)','↑M'],[md.moonset,'rgba(124,58,237,0.9)','↓M']].forEach(([lm,col,lbl]) => {
+      if (lm==null) return;
+      const x = xOfMin(lm);
+      ctx.beginPath(); ctx.moveTo(x, yHorizon-5); ctx.lineTo(x, yHorizon+5);
+      ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.fillStyle=col; ctx.font='bold 7px IBM Plex Mono'; ctx.textAlign='center';
+      ctx.fillText(lbl, x, yHorizon+14); ctx.textAlign='left';
+    });
+
+    // Phase label top-right
+    ctx.fillStyle = 'rgba(167,139,250,0.65)'; ctx.font = '8px IBM Plex Mono'; ctx.textAlign = 'right';
+    ctx.fillText(`${md.emoji} ${md.phaseName}  ${Math.round(md.illumination*100)}%`, PAD.l+CW-3, PAD.t+11);
+    ctx.textAlign = 'left';
+  }
+
+  ctx.restore();
+
+  // ── Solar peak dot (outside clip) ──
+  const peak = sunPts.reduce((a,b) => b.alt > a.alt ? b : a);
+  if (peak.alt > ALT_MIN) {
+    const px=xOfMin(peak.lm), py=yOfAlt(peak.alt);
+    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI*2);
+    ctx.fillStyle='#f5e642'; ctx.shadowBlur=12; ctx.shadowColor='#f5e642'; ctx.fill(); ctx.shadowBlur=0;
+    ctx.fillStyle = activeTab==='photo' ? '#f59e0b' : '#c084fc';
+    ctx.font='bold 9px IBM Plex Mono'; ctx.textAlign='center';
+    ctx.fillText(peak.alt.toFixed(1)+'°', px, Math.max(py-9, PAD.t+9));
+    ctx.textAlign='left';
+  }
+
+  // ── Sunrise/sunset ticks ──
+  if (!d.polarDay && d.sunrise != null) {
+    [[d.sunrise,'#f5e642','↑☀'],[d.sunset,'#f5c030','↓☀']].forEach(([lm,col,lbl]) => {
+      if (lm==null) return;
+      const x=xOfMin(lm);
+      if (x<PAD.l||x>PAD.l+CW) return;
+      ctx.beginPath(); ctx.moveTo(x,yHorizon-5); ctx.lineTo(x,yHorizon+5);
+      ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.fillStyle=col; ctx.font='bold 7px IBM Plex Mono'; ctx.textAlign='center';
+      ctx.fillText(lbl, x, yHorizon-8); ctx.textAlign='left';
+    });
+  }
+
+  // ── BMNT/EENT dashed verticals ──
+  if (!d.nauPolarDay && !d.nauPolarNight) {
+    [[d.bmnt,'rgba(96,197,255,0.6)','BMNT'],[d.eent,'rgba(255,126,66,0.6)','EENT']].forEach(([lm,col,lbl]) => {
+      if (lm==null) return;
+      const x=xOfMin(lm);
+      if (x<PAD.l||x>PAD.l+CW) return;
+      ctx.beginPath(); ctx.moveTo(x,PAD.t); ctx.lineTo(x,PAD.t+CH);
+      ctx.strokeStyle=col.replace('0.6','0.28'); ctx.lineWidth=1;
+      ctx.setLineDash([3,4]); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=col; ctx.font='7px IBM Plex Mono'; ctx.textAlign='center';
+      ctx.fillText(lbl, x, PAD.t+9); ctx.textAlign='left';
+    });
+  }
+
+  // ── Polar annotations ──
+  if (d.polarDay) {
+    ctx.fillStyle='rgba(245,230,66,0.55)'; ctx.font='8px IBM Plex Mono';
+    ctx.textAlign='center'; ctx.fillText('☀ Midnight Sun — sun above horizon all day', W/2, PAD.t+10); ctx.textAlign='left';
+  }
+  if (d.polarNight) {
+    ctx.fillStyle='rgba(61,88,112,0.6)'; ctx.font='10px IBM Plex Mono';
+    ctx.textAlign='center'; ctx.fillText('Polar Night — sun below horizon all day', W/2, H/2); ctx.textAlign='left';
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════
+//  CHART DRAW HELPERS
+// ══════════════════════════════════════════════════════════════
+function drawMonthGrid(ctx, xOf, P, CH, DPR, fontName) {
+  ctx.fillStyle='rgba(61,88,112,0.8)';
+  ctx.font=`${9*DPR}px ${fontName||'IBM Plex Mono'}`;
+  MONTH_STARTS.forEach((doy,i)=>{
+    const x=xOf(doy);
+    ctx.fillText(MONTHS[i],x,P.t+CH+22*DPR);
+    ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
+    ctx.strokeStyle='rgba(27,44,71,0.45)'; ctx.lineWidth=1; ctx.stroke();
+  });
+}
+function drawSolsticeLines(ctx,xOf,P,CH,DPR) {
+  [{doy:79,lbl:'VE',c:'#42e8c8'},{doy:171,lbl:'SS',c:'#f5e642'},
+   {doy:265,lbl:'AE',c:'#42e8c8'},{doy:354,lbl:'WS',c:'#60c5ff'}].forEach(e=>{
+    const x=xOf(e.doy);
+    ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
+    ctx.strokeStyle=e.c+'40'; ctx.lineWidth=1.5*DPR;
+    ctx.setLineDash([3*DPR,3*DPR]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=e.c; ctx.font=`${8*DPR}px Orbitron`;
+    ctx.fillText(e.lbl,x-5*DPR,P.t+11*DPR);
+  });
+}
+function drawSelLine(ctx,xOf,P,CH,DPR,color) {
+  if (selectedDoy==null) return;
+  const x=xOf(selectedDoy);
+  ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
+  ctx.strokeStyle=color||'rgba(255,79,200,0.85)'; ctx.lineWidth=2*DPR; ctx.setLineDash([]); ctx.stroke();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SOLAR CHARTS
+// ══════════════════════════════════════════════════════════════
+function drawSChart1() {
+  const canvas=document.getElementById('sChart1');
+  const DPR=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth*DPR, H=300*DPR;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const P={t:18*DPR,r:38*DPR,b:32*DPR,l:50*DPR};
+  const CW=W-P.l-P.r, CH=H-P.t-P.b;
+  const xOf=doy=>P.l+(doy/364)*CW;
+  const yOf=min=>P.t+CH-(min/1440)*CH;
+
+  ctx.fillStyle='#05080f'; ctx.fillRect(P.l,P.t,CW,CH);
+
+  for (const d of data) {
+    const x=xOf(d.doy), w=CW/364+1;
+    if (d.nauPolarDay) { ctx.fillStyle='rgba(245,230,66,0.42)'; ctx.fillRect(x,P.t,w,CH); continue; }
+    if (d.nauPolarNight) continue;
+    if (d.astRise!=null) {
+      ctx.fillStyle='rgba(155,111,255,0.2)';
+      const y1=yOf(d.astSet),y2=yOf(d.astRise);
+      ctx.fillRect(x,Math.min(y1,y2),w,Math.abs(y2-y1));
+    }
+    if (d.bmnt!=null && d.sunrise!=null) {
+      ctx.fillStyle='rgba(96,197,255,0.5)';
+      ctx.fillRect(x,Math.min(yOf(d.sunrise),yOf(d.bmnt)),w,Math.abs(yOf(d.bmnt)-yOf(d.sunrise)));
+      ctx.fillStyle='rgba(255,126,66,0.5)';
+      ctx.fillRect(x,Math.min(yOf(d.eent),yOf(d.sunset)),w,Math.abs(yOf(d.sunset)-yOf(d.eent)));
+    }
+    if (d.sunrise!=null) {
+      ctx.fillStyle='rgba(245,230,66,0.4)';
+      ctx.fillRect(x,Math.min(yOf(d.sunset),yOf(d.sunrise)),w,Math.abs(yOf(d.sunrise)-yOf(d.sunset)));
+    }
+  }
+  const drawL=(key,color,lw,dash)=>{
+    ctx.beginPath(); let f=true;
+    for (const d of data) { if(!d[key])continue; const x=xOf(d.doy),y=yOf(d[key]); f?(ctx.moveTo(x,y),f=false):ctx.lineTo(x,y); }
+    ctx.strokeStyle=color; ctx.lineWidth=lw*DPR;
+    dash?ctx.setLineDash([3*DPR,4*DPR]):ctx.setLineDash([]); ctx.stroke(); ctx.setLineDash([]);
+  };
+  drawL('bmnt','rgba(96,197,255,0.9)',1.7,false);
+  drawL('eent','rgba(255,126,66,0.9)',1.7,false);
+  drawL('sunrise','rgba(245,230,66,0.95)',2.1,false);
+  drawL('sunset','rgba(245,200,48,0.75)',1.5,false);
+  drawL('noon','rgba(66,232,200,0.5)',1.3,true);
+
+  ctx.setLineDash([2*DPR,5*DPR]);
+  [0,3,6,9,12,15,18,21,24].forEach(h=>{
+    const y=yOf(h*60);
+    ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
+    ctx.strokeStyle='rgba(27,44,71,0.75)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(61,88,112,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    const lbl=h===0||h===24?'12AM':h===12?'12PM':h>12?`${h-12}PM`:`${h}AM`;
+    ctx.fillText(lbl,P.l-ctx.measureText(lbl).width-4*DPR,y+3*DPR);
+  });
+  ctx.setLineDash([]);
+  [{key:'bmnt',lbl:'BMNT',c:'rgba(96,197,255,0.85)'},{key:'sunrise',lbl:'SR',c:'rgba(245,230,66,0.9)'},
+   {key:'eent',lbl:'EENT',c:'rgba(255,126,66,0.85)'},{key:'sunset',lbl:'SET',c:'rgba(245,200,48,0.75)'}].forEach(l=>{
+    const ref=data[170]; if(!ref[l.key])return;
+    ctx.fillStyle=l.c; ctx.font=`bold ${8*DPR}px IBM Plex Mono`;
+    ctx.fillText(l.lbl,P.l+CW+4*DPR,yOf(ref[l.key])+3*DPR);
+  });
+  drawMonthGrid(ctx,xOf,P,CH,DPR);
+  drawSolsticeLines(ctx,xOf,P,CH,DPR);
+  drawSelLine(ctx,xOf,P,CH,DPR);
+}
+
+function drawSChart2() {
+  const canvas=document.getElementById('sChart2');
+  const DPR=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth*DPR, H=200*DPR;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const P={t:18*DPR,r:38*DPR,b:32*DPR,l:50*DPR};
+  const CW=W-P.l-P.r, CH=H-P.t-P.b;
+  const elevs=data.map(d=>d.maxElev);
+  const minE=Math.min(...elevs)-3, maxE=Math.max(...elevs)+3;
+  const eRange=maxE-minE;
+  const xOf=doy=>P.l+(doy/364)*CW;
+  const yOf=el=>P.t+CH-((el-minE)/eRange)*CH;
+
+  data.forEach(d=>{ if(d.polarDay){ ctx.fillStyle='rgba(245,200,66,0.07)'; ctx.fillRect(xOf(d.doy)-1,P.t,CW/364+2,CH); }});
+  ctx.beginPath();
+  data.forEach((d,i)=>{ const x=xOf(d.doy),y=yOf(d.maxElev); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+  ctx.lineTo(xOf(364),P.t+CH); ctx.lineTo(xOf(0),P.t+CH); ctx.closePath();
+  const fg=ctx.createLinearGradient(0,P.t,0,P.t+CH);
+  fg.addColorStop(0,'rgba(192,132,252,0.2)'); fg.addColorStop(1,'rgba(192,132,252,0.01)');
+  ctx.fillStyle=fg; ctx.fill();
+
+  if (minE<0) {
+    const y0=yOf(0);
+    ctx.beginPath(); ctx.moveTo(P.l,y0); ctx.lineTo(P.l+CW,y0);
+    ctx.strokeStyle='rgba(96,197,255,0.4)'; ctx.lineWidth=1.5*DPR;
+    ctx.setLineDash([4*DPR,4*DPR]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='rgba(96,197,255,0.45)'; ctx.font=`${8*DPR}px IBM Plex Mono`;
+    ctx.fillText('0°',P.l+3*DPR,y0-4*DPR);
+  }
+  ctx.beginPath();
+  data.forEach((d,i)=>{ const x=xOf(d.doy),y=yOf(d.maxElev); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+  ctx.strokeStyle='#c084fc'; ctx.lineWidth=2.5*DPR; ctx.lineJoin='round'; ctx.stroke();
+
+  ctx.setLineDash([2*DPR,5*DPR]);
+  [-10,0,10,20,30,40,50].forEach(el=>{
+    if(el<minE||el>maxE)return;
+    const y=yOf(el);
+    ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
+    ctx.strokeStyle='rgba(27,44,71,0.75)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(61,88,112,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    ctx.fillText(el+'°',P.l-ctx.measureText(el+'°').width-4*DPR,y+3*DPR);
+  });
+  ctx.setLineDash([]);
+
+  [[data[171],'#f5e642'],[data[354],'#60c5ff']].forEach(([d,c])=>{
+    const x=xOf(d.doy),y=yOf(d.maxElev);
+    ctx.beginPath(); ctx.arc(x,y,5*DPR,0,Math.PI*2); ctx.fillStyle=c; ctx.fill();
+    ctx.fillStyle=c; ctx.font=`bold ${9*DPR}px IBM Plex Mono`;
+    ctx.fillText(d.maxElev.toFixed(1)+'°',x+7*DPR,y+(d===data[171]?-6*DPR:14*DPR));
+  });
+  if (selectedDoy!=null) {
+    const d=data[selectedDoy], x=xOf(d.doy), y=yOf(d.maxElev);
+    ctx.beginPath(); ctx.arc(x,y,5*DPR,0,Math.PI*2); ctx.fillStyle='#ff4fc8'; ctx.fill();
+    ctx.fillStyle='#ff4fc8'; ctx.font=`bold ${9*DPR}px IBM Plex Mono`;
+    ctx.fillText(d.maxElev.toFixed(1)+'°',x+7*DPR,y-5*DPR);
+  }
+  drawMonthGrid(ctx,xOf,P,CH,DPR); drawSolsticeLines(ctx,xOf,P,CH,DPR); drawSelLine(ctx,xOf,P,CH,DPR);
+}
+
+function drawSChart3() {
+  const canvas=document.getElementById('sChart3');
+  const DPR=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth*DPR, H=190*DPR;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const P={t:20*DPR,r:38*DPR,b:32*DPR,l:50*DPR};
+  const CW=W-P.l-P.r, CH=H-P.t-P.b;
+  const rates=data.map(d=>d.rate);
+  const maxR=Math.max(...rates.map(Math.abs))*1.1;
+  const xOf=doy=>P.l+(doy/364)*CW;
+  const yOf=rate=>P.t+CH/2-(rate/maxR)*(CH/2);
+
+  for (const d of data) {
+    const x=xOf(d.doy),w=CW/364+1,y0=yOf(0),y=yOf(d.rate);
+    ctx.fillStyle=d.rate>=0?'rgba(66,232,200,0.09)':'rgba(255,126,66,0.09)';
+    d.rate>=0?ctx.fillRect(x,y,w,y0-y):ctx.fillRect(x,y0,w,y-y0);
+  }
+  const thresh=Math.max(...rates)*0.82;
+  data.forEach(d=>{ if(Math.abs(d.rate)>=thresh){ ctx.fillStyle='rgba(66,232,200,0.07)'; ctx.fillRect(xOf(d.doy)-1,P.t,CW/364+2,CH); }});
+
+  const y0=yOf(0);
+  ctx.beginPath(); ctx.moveTo(P.l,y0); ctx.lineTo(P.l+CW,y0);
+  ctx.strokeStyle='rgba(245,230,66,0.4)'; ctx.lineWidth=1.5*DPR;
+  ctx.setLineDash([4*DPR,4*DPR]); ctx.stroke(); ctx.setLineDash([]);
+
+  let prev=data[0];
+  for (let i=1;i<data.length;i++) {
+    const d=data[i];
+    ctx.beginPath(); ctx.moveTo(xOf(prev.doy),yOf(prev.rate)); ctx.lineTo(xOf(d.doy),yOf(d.rate));
+    ctx.strokeStyle=d.rate>=0?'rgba(66,232,200,0.9)':'rgba(255,126,66,0.9)'; ctx.lineWidth=2.5*DPR; ctx.stroke();
+    prev=d;
+  }
+  [{doy:79,lbl:'VERNAL EQX\nmax gain',c:'#42e8c8'},{doy:171,lbl:'SUMMER SOL\nrate≈0',c:'#f5e642'},
+   {doy:265,lbl:'AUTUMNAL EQX\nmax loss',c:'#42e8c8'},{doy:354,lbl:'WINTER SOL\nrate≈0',c:'#60c5ff'}].forEach(a=>{
+    const x=xOf(a.doy);
+    ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
+    ctx.strokeStyle=a.c+'35'; ctx.lineWidth=1.5*DPR; ctx.setLineDash([3*DPR,3*DPR]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=a.c; ctx.font=`${7*DPR}px Orbitron`; ctx.textAlign='center';
+    a.lbl.split('\n').forEach((l,li)=>ctx.fillText(l,x,P.t+(8+li*9)*DPR));
+    ctx.textAlign='left';
+  });
+  ctx.setLineDash([2*DPR,5*DPR]);
+  [-6,-4,-2,0,2,4,6].forEach(r=>{
+    if(Math.abs(r)>maxR)return;
+    const y=yOf(r);
+    ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
+    ctx.strokeStyle='rgba(27,44,71,0.7)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(61,88,112,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    const lbl=`${r>0?'+':''}${r}m`;
+    ctx.fillText(lbl,P.l-ctx.measureText(lbl).width-4*DPR,y+3*DPR);
+  });
+  ctx.setLineDash([]);
+  const pg=data.reduce((a,b)=>b.rate>a.rate?b:a);
+  const pl=data.reduce((a,b)=>b.rate<a.rate?b:a);
+  [[pg,'#42e8c8'],[pl,'#ff7e42']].forEach(([d,c])=>{
+    const x=xOf(d.doy),y=yOf(d.rate);
+    ctx.beginPath(); ctx.arc(x,y,4*DPR,0,Math.PI*2); ctx.fillStyle=c; ctx.fill();
+    ctx.fillStyle=c; ctx.font=`${8*DPR}px IBM Plex Mono`;
+    ctx.fillText(fmtRate(d.rate),x+5*DPR,y+(d.rate>0?-5*DPR:12*DPR));
+  });
+  if (selectedDoy!=null) {
+    const d=data[selectedDoy],x=xOf(d.doy),y=yOf(d.rate);
+    ctx.beginPath(); ctx.arc(x,y,5*DPR,0,Math.PI*2); ctx.fillStyle='#ff4fc8'; ctx.fill();
+  }
+  drawMonthGrid(ctx,xOf,P,CH,DPR); drawSelLine(ctx,xOf,P,CH,DPR);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PHOTO CHARTS
+// ══════════════════════════════════════════════════════════════
+function drawPChart1() {
+  const canvas=document.getElementById('pChart1');
+  const DPR=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth*DPR, H=270*DPR;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const P={t:16*DPR,r:16*DPR,b:32*DPR,l:50*DPR};
+  const CW=W-P.l-P.r, CH=H-P.t-P.b;
+  const xOf=doy=>P.l+(doy/364)*CW;
+  const yOf=min=>P.t+CH-(min/1440)*CH;
+
+  ctx.fillStyle='#0c0a08'; ctx.fillRect(P.l,P.t,CW,CH);
+
+  const STEP=6;
+  for (const d of data) {
+    const x=xOf(d.doy), bw=CW/364+1;
+    let lastCat=null, lastY=null;
+    for (let u=0; u<=1440; u+=STEP) {
+      const alt=sunAlt(d.jd,u), cat=elevCat(alt);
+      const localM=toLocal(u,d.off), y=yOf(localM);
+      if (lastCat!==null && lastCat!=='night') {
+        const dy=Math.abs(y-lastY), top=Math.min(y,lastY);
+        ctx.fillStyle=CAT_COLOR[lastCat]; ctx.fillRect(x,top,bw,Math.max(dy,1));
+      }
+      lastCat=cat; lastY=y;
+    }
+  }
+  ctx.setLineDash([2*DPR,5*DPR]);
+  [0,3,6,9,12,15,18,21,24].forEach(h=>{
+    const y=yOf(h*60);
+    ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
+    ctx.strokeStyle='rgba(45,38,32,0.8)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(90,78,58,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    const lbl=h===0||h===24?'12AM':h===12?'12PM':h>12?`${h-12}PM`:`${h}AM`;
+    ctx.fillText(lbl,P.l-ctx.measureText(lbl).width-4*DPR,y+3*DPR);
+  });
+  ctx.setLineDash([]);
+  MONTH_STARTS.forEach((doy,i)=>{
+    const x=xOf(doy);
+    ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
+    ctx.strokeStyle='rgba(45,38,32,0.5)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(90,78,58,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    ctx.fillText(MONTHS[i],x,P.t+CH+22*DPR);
+  });
+  [{doy:79,lbl:'VE',c:'#34d399'},{doy:171,lbl:'SS',c:'#f59e0b'},
+   {doy:265,lbl:'AE',c:'#34d399'},{doy:354,lbl:'WS',c:'#60a5fa'}].forEach(e=>{
+    const x=xOf(e.doy);
+    ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
+    ctx.strokeStyle=e.c+'40'; ctx.lineWidth=1.5*DPR; ctx.setLineDash([3*DPR,3*DPR]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=e.c; ctx.font=`${8*DPR}px IBM Plex Mono`; ctx.fillText(e.lbl,x-5*DPR,P.t+11*DPR);
+  });
+  drawSelLine(ctx,xOf,P,CH,DPR,'rgba(244,63,94,0.9)');
+}
+
+function drawPChart2() {
+  const canvas=document.getElementById('pChart2');
+  const DPR=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth*DPR, H=185*DPR;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const P={t:18*DPR,r:44*DPR,b:32*DPR,l:50*DPR};
+  const CW=W-P.l-P.r, CH=H-P.t-P.b;
+  const maxMins=Math.max(...data.map(d=>d.goldenMin+d.blueMin))*1.1;
+  const xOf=doy=>P.l+(doy/364)*CW;
+  const yOfM=min=>P.t+CH-(min/maxMins)*CH;
+  const yOfS=s=>P.t+CH-(s/100)*CH;
+
+  for (const d of data) {
+    const x=xOf(d.doy), bw=CW/364+1;
+    const yG=yOfM(d.goldenMin), yB=yOfM(d.goldenMin+d.blueMin), yBase=P.t+CH;
+    ctx.fillStyle='rgba(217,119,6,0.75)'; ctx.fillRect(x,yG,bw,yBase-yG);
+    ctx.fillStyle='rgba(29,78,216,0.75)'; ctx.fillRect(x,yB,bw,yG-yB);
+  }
+
+  // Best windows highlight
+  let inRun=false, runStart=0;
+  for (let i=0;i<365;i++) {
+    if(data[i].score>=70&&!inRun){inRun=true;runStart=i;}
+    if((data[i].score<70||i===364)&&inRun){inRun=false;if(i-runStart>14){ctx.fillStyle='rgba(245,158,11,0.07)';ctx.fillRect(xOf(runStart),P.t,xOf(i)-xOf(runStart),CH);}}
+  }
+
+  ctx.beginPath(); let f=true;
+  for (const d of data) { const x=xOf(d.doy),y=yOfS(d.score); f?(ctx.moveTo(x,y),f=false):ctx.lineTo(x,y); }
+  ctx.strokeStyle='rgba(52,211,153,0.9)'; ctx.lineWidth=2*DPR; ctx.lineJoin='round'; ctx.stroke();
+
+  [0,25,50,75,100].forEach(s=>{
+    ctx.fillStyle='rgba(52,211,153,0.45)'; ctx.font=`${8*DPR}px IBM Plex Mono`;
+    ctx.fillText(s,P.l+CW+4*DPR,yOfS(s)+3*DPR);
+  });
+  ctx.setLineDash([2*DPR,5*DPR]);
+  [60,120,180,240,300].forEach(m=>{
+    if(m>maxMins)return;
+    const y=yOfM(m);
+    ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
+    ctx.strokeStyle='rgba(45,38,32,0.7)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(90,78,58,0.75)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    ctx.fillText(m+'m',P.l-ctx.measureText(m+'m').width-4*DPR,y+3*DPR);
+  });
+  ctx.setLineDash([]);
+  drawMonthGrid(ctx,xOf,P,CH,DPR,'IBM Plex Mono');
+  if (selectedDoy!=null) {
+    const x=xOf(selectedDoy),y=yOfS(data[selectedDoy].score);
+    ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
+    ctx.strokeStyle='rgba(244,63,94,0.85)'; ctx.lineWidth=2*DPR; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x,y,5*DPR,0,Math.PI*2); ctx.fillStyle='#f43f5e'; ctx.fill();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  RENDER ALL
+// ══════════════════════════════════════════════════════════════
+function renderAllCharts() {
+  if (activeTab==='solar') { drawSChart1(); drawSChart3(); drawSChart4(); }
+  else if (activeTab==='photo') { drawPChart1(); drawPChart2(); }
+  else if (activeTab==='moon') { renderMoonTab(); }
+  drawArc(selectedDoy);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TOOLTIP & INTERACTION (touch + mouse)
+// ══════════════════════════════════════════════════════════════
+const ttEl = document.getElementById('tooltip');
+let touchTooltipTimer = null;
+
+function getTooltipHTML(doy) {
+  const d=data[doy], mon=MONTHS[d.date.getUTCMonth()], tz=tzLabel(d.off);
+  const row=(k,v)=>`<div class="tt-r"><span class="tt-k">${k}</span><span class="tt-v">${v}</span></div>`;
+  let rows='';
+  if (d.polarDay)        rows+=row('Status','☀ Midnight Sun');
+  else if (d.polarNight) rows+=row('Status','● Polar Night');
+  else {
+    if(d.bmnt)    rows+=row('BMNT',minToStr(d.bmnt));
+    if(d.sunrise) rows+=row('Sunrise',minToStr(d.sunrise));
+    if(d.sunset)  rows+=row('Sunset',minToStr(d.sunset));
+    if(d.eent)    rows+=row('EENT',minToStr(d.eent));
+    rows+=row('Daylight',fmtHrs(d.daylight));
+  }
+  rows+=row('Max Elev',d.maxElev.toFixed(1)+'°');
+  if(activeTab==='solar') rows+=row('Δ Daylight',fmtRate(d.rate));
+  else {
+    rows+=row('Golden',fmtDur(d.goldenMin));
+    rows+=`<div class="tt-r"><span class="tt-k">Score</span><span class="tt-v" style="color:${scoreColor(d.score)}">${d.score} · ${scoreLabel(d.score)}</span></div>`;
+  }
+  return `<div class="tt-hdr">${mon} ${d.date.getUTCDate()} · ${tz}</div>${rows}`;
+}
+
+function showTooltip(doy, clientX, clientY) {
+  ttEl.innerHTML = getTooltipHTML(doy);
+  ttEl.style.display = 'block';
+  const ttW=220, ttH=220;
+  let lx=clientX+16, ly=clientY-10;
+  if (lx+ttW>window.innerWidth-8) lx=clientX-ttW-8;
+  if (ly+ttH>window.innerHeight-8) ly=window.innerHeight-ttH-8;
+  ttEl.style.left=lx+'px'; ttEl.style.top=ly+'px';
+}
+
+function bindChart(canvasId) {
+  const canvas=document.getElementById(canvasId);
+  if (!canvas) return;
+
+  const getDoy=clientX=>{
+    const rect=canvas.getBoundingClientRect();
+    return Math.min(364,Math.max(0,Math.round((clientX-rect.left)/rect.width*364)));
+  };
+
+  // Mouse
+  canvas.addEventListener('mousemove', e=>{
+    showTooltip(getDoy(e.clientX), e.clientX, e.clientY);
+  });
+  canvas.addEventListener('mouseleave', ()=>{ ttEl.style.display='none'; });
+  canvas.addEventListener('click', e=>{
+    const doy=getDoy(e.clientX);
+    selectDate(doy);
+  });
+
+  // Touch — tap to select, long-press for tooltip
+  canvas.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    const t=e.touches[0];
+    const doy=getDoy(t.clientX);
+    touchTooltipTimer=setTimeout(()=>{
+      showTooltip(doy,t.clientX,t.clientY);
+    },400);
+  }, {passive:false});
+  canvas.addEventListener('touchend', e=>{
+    e.preventDefault();
+    if (touchTooltipTimer) { clearTimeout(touchTooltipTimer); touchTooltipTimer=null; }
+    const t=e.changedTouches[0];
+    const doy=getDoy(t.clientX);
+    selectDate(doy);
+    ttEl.style.display='none';
+  }, {passive:false});
+  canvas.addEventListener('touchmove', e=>{
+    if (touchTooltipTimer) { clearTimeout(touchTooltipTimer); touchTooltipTimer=null; }
+    ttEl.style.display='none';
+  }, {passive:true});
+}
+
+
+// ══════════════════════════════════════════════════════════════
+//  MOON MATH
+//  Jean Meeus "Astronomical Algorithms" simplified lunar model.
+//  Accurate to ~1° — sufficient for rise/set, phase, illumination.
+// ══════════════════════════════════════════════════════════════
+
+function moonPhase(jd) {
+  // Days since known new moon (Jan 6, 2000 18:14 UTC = JD 2451550.26)
+  const KNOWN_NEW = 2451550.26;
+  const SYNODIC   = 29.53058867;
+  const age = ((jd - KNOWN_NEW) % SYNODIC + SYNODIC) % SYNODIC; // 0–29.53 days
+  const illumination = 0.5 * (1 - Math.cos(age / SYNODIC * 2 * Math.PI)); // 0–1
+  return { age, illumination };
+}
+
+function phaseEmoji(age) {
+  const s = age / 29.53058867;
+  if (s < 0.033) return '🌑';
+  if (s < 0.158) return '🌒';
+  if (s < 0.258) return '🌓';
+  if (s < 0.408) return '🌔';
+  if (s < 0.542) return '🌕';
+  if (s < 0.658) return '🌖';
+  if (s < 0.758) return '🌗';
+  if (s < 0.908) return '🌘';
+  return '🌑';
+}
+
+function phaseName(age) {
+  const s = age / 29.53058867;
+  if (s < 0.033 || s >= 0.967) return 'New Moon';
+  if (s < 0.258) return 'Waxing Crescent';
+  if (s < 0.292) return 'First Quarter';
+  if (s < 0.458) return 'Waxing Gibbous';
+  if (s < 0.542) return 'Full Moon';
+  if (s < 0.708) return 'Waning Gibbous';
+  if (s < 0.742) return 'Last Quarter';
+  return 'Waning Crescent';
+}
+
+// Simplified moon position (RA/Dec) — Meeus Ch.47 low-precision
+function moonPosition(jd) {
+  const T  = (jd - 2451545.0) / 36525;
+  const Lo = (218.3164477 + 481267.88123421*T) % 360;        // mean longitude
+  const M  = ((357.5291092 + 35999.0502909*T) % 360) * Math.PI/180; // sun mean anomaly
+  const Mp = ((134.9633964 + 477198.8675055*T) % 360) * Math.PI/180; // moon mean anomaly
+  const D  = ((297.8501921 + 445267.1114034*T) % 360) * Math.PI/180; // moon elongation
+  const F  = ((93.2720950  + 483202.0175233*T) % 360) * Math.PI/180; // arg of latitude
+
+  // Longitude perturbations (degrees)
+  const dL = 6.289*Math.sin(Mp)
+    - 1.274*Math.sin(2*D - Mp)
+    + 0.658*Math.sin(2*D)
+    - 0.214*Math.sin(2*Mp)
+    - 0.186*Math.sin(M)
+    - 0.114*Math.sin(2*F);
+  const lam = (Lo + dL) * Math.PI/180; // ecliptic longitude
+
+  // Latitude perturbations (degrees)
+  const dB = 5.128*Math.sin(F)
+    + 0.281*Math.sin(Mp + F)
+    - 0.278*Math.sin(F - Mp)
+    - 0.173*Math.sin(2*D - F);
+  const beta = dB * Math.PI/180; // ecliptic latitude
+
+  // Obliquity of ecliptic
+  const eps = (23.439291 - 0.013004*T) * Math.PI/180;
+
+  // Equatorial coordinates
+  const ra  = Math.atan2(Math.sin(lam)*Math.cos(eps) - Math.tan(beta)*Math.sin(eps), Math.cos(lam));
+  const dec = Math.asin(Math.sin(beta)*Math.cos(eps) + Math.cos(beta)*Math.sin(eps)*Math.sin(lam));
+  return { ra, dec };
+}
+
+// Earth–Moon distance in km (Meeus simplified)
+function moonDistance(jd) {
+  const T  = (jd - 2451545.0) / 36525;
+  const Mp = ((134.9633964 + 477198.8675055*T) % 360) * Math.PI/180;
+  const D  = ((297.8501921 + 445267.1114034*T) % 360) * Math.PI/180;
+  const M  = ((357.5291092 +  35999.0502909*T) % 360) * Math.PI/180;
+  const F  = ((93.2720950  + 483202.0175233*T) % 360) * Math.PI/180;
+  // Distance in km — mean is ~385,000 km
+  const dKm = 385000.56
+    - 20905.355 * Math.cos(Mp)
+    - 3699.111  * Math.cos(2*D - Mp)
+    - 2955.968  * Math.cos(2*D)
+    -  569.925  * Math.cos(2*Mp)
+    +   48.888  * Math.cos(M)
+    -    3.149  * Math.cos(2*F)
+    +  246.158  * Math.cos(2*D - 2*Mp)
+    -  152.138  * Math.cos(2*D - M - Mp)
+    -  170.733  * Math.cos(2*D + Mp)
+    -  204.586  * Math.cos(2*D - M)
+    -  129.620  * Math.cos(D)
+    +  108.743  * Math.cos(2*D)  // already counted above — simplified model
+    ;
+  return Math.abs(dKm); // always positive
+}
+
+// Moon altitude for a given UTC minute on a given JD
+function moonAlt(jd, utcMin) {
+  const { ra, dec } = moonPosition(jd);
+  const T     = (jd - 2451545.0) / 36525;
+  const GMST0 = (280.46061837 + 360.98564736629*(jd - 2451545.0)) % 360;
+  const GMST  = (GMST0 + utcMin / 4) % 360;
+  const LST   = (GMST + LOC.lon + 360) % 360;
+  const HA    = LST * Math.PI/180 - ra;
+  const latR  = LOC.lat * Math.PI/180;
+  const sinAlt = Math.sin(latR)*Math.sin(dec) + Math.cos(latR)*Math.cos(dec)*Math.cos(HA);
+  return Math.asin(Math.max(-1, Math.min(1, sinAlt))) * 180/Math.PI;
+}
+
+// Find moonrise and moonset UTC minutes for a given JD
+function moonRiseSet(jd) {
+  const alts = [];
+  for (let u = 0; u <= 1440; u += 5) alts.push({ u, a: moonAlt(jd, u) });
+
+  let rise = null, set = null;
+  for (let i = 1; i < alts.length; i++) {
+    const a0 = alts[i-1].a, a1 = alts[i].a;
+    if (a0 < 0 && a1 >= 0) {
+      // Interpolate crossing
+      const frac = -a0 / (a1 - a0);
+      rise = alts[i-1].u + frac * 5;
+    }
+    if (a0 >= 0 && a1 < 0) {
+      const frac = a0 / (a0 - a1);
+      set = alts[i-1].u + frac * 5;
+    }
+  }
+  // Check if moon is up all day or all night
+  const up = alts.every(p => p.a >= 0);
+  const down = alts.every(p => p.a < 0);
+  return { rise, set, upAllDay: up, downAllDay: down };
+}
+
+// Build moon data array (parallel to solar data)
+function buildMoonData() {
+  return data.map(d => {
+    const jd   = d.jd;
+    const off  = d.off;
+    const { age, illumination } = moonPhase(jd);
+    const rs = moonRiseSet(jd);
+    const toL = m => m == null ? null : toLocal(m, off);
+
+    // Astronomical darkness (sun < -18°) AND moon below horizon — ideal dark sky
+    let darkSkyMin = 0;
+    const STEP = 4;
+    for (let u = 0; u < 1440; u += STEP) {
+      const sAlt = sunAlt(jd, u);
+      const mAlt = moonAlt(jd, u);
+      if (sAlt < -18 && mAlt < 0) darkSkyMin += STEP;
+    }
+
+    // Moon max elevation
+    let maxMoonElev = -90;
+    for (let u = 0; u < 1440; u += 10) {
+      const a = moonAlt(jd, u);
+      if (a > maxMoonElev) maxMoonElev = a;
+    }
+
+    const dist = moonDistance(jd);
+    // Supermoon: full moon (age 13.5–15.5) within 362,000 km
+    // Micromoon: full moon beyond 405,000 km
+    const isFull   = age >= 13.5 && age <= 15.5;
+    const isSuper  = isFull && dist <= 362000;
+    const isMicro  = isFull && dist >= 405000;
+
+    return {
+      doy: d.doy, date: d.date, jd, off,
+      age, illumination,
+      emoji: phaseEmoji(age),
+      phaseName: phaseName(age),
+      moonrise: toL(rs.rise),
+      moonset:  toL(rs.set),
+      upAllDay:   rs.upAllDay,
+      downAllDay: rs.downAllDay,
+      darkSkyMin,
+      maxMoonElev,
+      dist, isSuper, isMicro, isFull,
+    };
+  });
+}
+
+let moonData = [];
+
+// ══════════════════════════════════════════════════════════════
+//  ANALEMMA CHART (Solar Tab IV)
+// ══════════════════════════════════════════════════════════════
+
+function drawSChart4() {
+  const canvas = document.getElementById('sChart4');
+  if (!canvas) return;
+  const DPR = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth * DPR, H = 300 * DPR;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  const P = { t: 20*DPR, r: 30*DPR, b: 36*DPR, l: 52*DPR };
+  const CW = W - P.l - P.r, CH = H - P.t - P.b;
+
+  // Gather solar noon altitude and azimuth for every day
+  const pts = data.map(d => {
+    const { dec, noonUTC } = solarParams(d.jd);
+    const latR = LOC.lat * Math.PI/180;
+    // Altitude at solar noon
+    const alt = (90 - Math.abs(LOC.lat - dec*180/Math.PI));
+    // Azimuth at solar noon: 180° (due south in NH), varies slightly due to EoT
+    // Use actual noon UTC minutes to compute precise azimuth
+    const haR = ((noonUTC - noonUTC) / 4) * Math.PI/180; // HA=0 at noon → az=180 in NH
+    // Azimuth offset from due south via equation of time displacement
+    // Real analemma x-axis = equation of time effect → use noonUTC vs 720-4*LON
+    const eotMin = (720 - 4*LOC.lon) - noonUTC; // +ve = fast, -ve = slow
+    const az = 180 + eotMin * 0.25; // 0.25°/min at equator approximation
+    return { alt, az, doy: d.doy };
+  });
+
+  // Compute axis ranges
+  const alts = pts.map(p => p.alt);
+  const azs  = pts.map(p => p.az);
+  const minAlt = Math.min(...alts) - 3, maxAlt = Math.max(...alts) + 3;
+  const minAz  = Math.min(...azs)  - 1, maxAz  = Math.max(...azs)  + 1;
+
+  const xOf = az  => P.l + ((az  - minAz)  / (maxAz  - minAz))  * CW;
+  const yOf = alt => P.t + CH - ((alt - minAlt) / (maxAlt - minAlt)) * CH;
+
+  // Grid
+  ctx.setLineDash([2*DPR, 5*DPR]);
+  // Alt grid
+  for (let a = Math.ceil(minAlt/5)*5; a <= maxAlt; a += 5) {
+    const y = yOf(a);
+    ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(P.l+CW, y);
+    ctx.strokeStyle = 'rgba(27,44,71,0.7)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = 'rgba(61,88,112,0.8)'; ctx.font = `${9*DPR}px IBM Plex Mono`;
+    ctx.fillText(a+'°', P.l - ctx.measureText(a+'°').width - 4*DPR, y + 3*DPR);
+  }
+  // Az grid
+  for (let z = Math.ceil(minAz); z <= maxAz; z += 1) {
+    const x = xOf(z);
+    ctx.beginPath(); ctx.moveTo(x, P.t); ctx.lineTo(x, P.t+CH);
+    ctx.strokeStyle = 'rgba(27,44,71,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = 'rgba(61,88,112,0.7)'; ctx.font = `${9*DPR}px IBM Plex Mono`;
+    ctx.textAlign = 'center';
+    ctx.fillText(z.toFixed(0)+'°', x, P.t+CH+16*DPR);
+    ctx.textAlign = 'left';
+  }
+  ctx.setLineDash([]);
+
+  // Axis labels
+  ctx.fillStyle = 'rgba(61,88,112,0.7)'; ctx.font = `${8*DPR}px IBM Plex Mono`;
+  ctx.textAlign = 'center';
+  ctx.fillText('← West of South · Azimuth at Solar Noon · East of South →', P.l + CW/2, P.t+CH+28*DPR);
+  ctx.save(); ctx.translate(P.l - 38*DPR, P.t + CH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('Altitude at Solar Noon (°)', 0, 0);
+  ctx.restore();
+  ctx.textAlign = 'left';
+
+  // Draw figure-8 — color by season
+  // Split into summer (doy 79–265) and winter halves
+  const summer = pts.filter(p => p.doy >= 79 && p.doy <= 265);
+  const winter = pts.filter(p => p.doy < 79 || p.doy > 265);
+
+  const drawSegment = (subset, col) => {
+    if (subset.length < 2) return;
+    ctx.beginPath();
+    subset.forEach((p, i) => {
+      const x = xOf(p.az), y = yOf(p.alt);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = col; ctx.lineWidth = 2.5*DPR; ctx.lineJoin = 'round'; ctx.stroke();
+  };
+
+  // Draw faint fill
+  ctx.beginPath();
+  pts.forEach((p, i) => {
+    const x = xOf(p.az), y = yOf(p.alt);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.strokeStyle = 'rgba(192,132,252,0.12)'; ctx.lineWidth = 8*DPR; ctx.stroke();
+
+  drawSegment(summer, 'rgba(245,230,66,0.85)');
+  drawSegment(winter, 'rgba(96,197,255,0.85)');
+
+  // Month dots — one per month at the 1st
+  MONTH_STARTS.forEach((doy, mi) => {
+    const p = pts[Math.min(doy, pts.length-1)];
+    const x = xOf(p.az), y = yOf(p.alt);
+    ctx.beginPath(); ctx.arc(x, y, 4*DPR, 0, Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = 'rgba(192,132,252,0.7)'; ctx.lineWidth = 1.5*DPR; ctx.stroke();
+    ctx.fillStyle = 'rgba(192,132,252,0.85)';
+    ctx.font = `bold ${8*DPR}px Orbitron`;
+    ctx.textAlign = 'center';
+    ctx.fillText(MONTHS[mi], x, y - 7*DPR);
+    ctx.textAlign = 'left';
+  });
+
+  // Solstice / equinox highlighted dots
+  [{doy:79,c:'#42e8c8',l:'VE'},{doy:171,c:'#f5e642',l:'SS'},{doy:265,c:'#42e8c8',l:'AE'},{doy:354,c:'#60c5ff',l:'WS'}].forEach(e => {
+    const p = pts[Math.min(e.doy, pts.length-1)];
+    const x = xOf(p.az), y = yOf(p.alt);
+    ctx.beginPath(); ctx.arc(x, y, 6*DPR, 0, Math.PI*2);
+    ctx.fillStyle = e.c; ctx.shadowBlur = 8*DPR; ctx.shadowColor = e.c; ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = e.c; ctx.font = `bold ${8*DPR}px Orbitron`;
+    ctx.textAlign = 'center';
+    ctx.fillText(e.l, x, y - 9*DPR);
+    ctx.textAlign = 'left';
+  });
+
+  // Selected day dot
+  if (selectedDoy != null) {
+    const p = pts[Math.min(selectedDoy, pts.length-1)];
+    const x = xOf(p.az), y = yOf(p.alt);
+    ctx.beginPath(); ctx.arc(x, y, 7*DPR, 0, Math.PI*2);
+    ctx.fillStyle = 'var(--s-sel)';
+    ctx.fillStyle = '#ff4fc8'; ctx.shadowBlur = 12*DPR; ctx.shadowColor = '#ff4fc8'; ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ff4fc8'; ctx.font = `bold ${9*DPR}px IBM Plex Mono`;
+    ctx.textAlign = 'center';
+    const d = data[selectedDoy];
+    ctx.fillText(`${MONTHS[d.date.getUTCMonth()]} ${d.date.getUTCDate()}`, x, y - 11*DPR);
+    ctx.textAlign = 'left';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  MOON TAB RENDERERS
+// ══════════════════════════════════════════════════════════════
+
+function buildMoonStats() {
+  if (!moonData.length) return;
+  const fullMoons  = moonData.filter(d => d.isFull);
+  const newMoons   = moonData.filter(d => d.age < 1.5 || d.age > 28.0);
+  const superMoons = moonData.filter(d => d.isSuper);
+  const bestDark   = moonData.reduce((a,b) => b.darkSkyMin > a.darkSkyMin ? b : a);
+  const perigee    = moonData.reduce((a,b) => b.dist < a.dist ? b : a);
+  const apogee     = moonData.reduce((a,b) => b.dist > a.dist ? b : a);
+
+  const sc = (v,l,s,a) => `<div class="stat-card" style="--accent:${a}">
+    <div class="stat-val">${v}</div><div class="stat-lbl">${l}</div><div class="stat-sub">${s}</div></div>`;
+  const fmtDate = d => MONTHS[d.date.getUTCMonth()] + ' ' + d.date.getUTCDate();
+
+  document.getElementById('moonStats').innerHTML =
+    sc(fullMoons.length, 'Full Moons', fullMoons.map(d=>MONTHS[d.date.getUTCMonth()]+' '+d.date.getUTCDate()).join(' · ')||'—', '#f0f9ff') +
+    sc(superMoons.length || '—', 'Supermoons', superMoons.length ? superMoons.map(d=>MONTHS[d.date.getUTCMonth()]+' '+d.date.getUTCDate()).join(' · ') : 'None this year', '#f43f5e') +
+    sc(Math.round(perigee.dist).toLocaleString()+' km', 'Closest Perigee', fmtDate(perigee), '#a78bfa') +
+    sc(Math.round(apogee.dist).toLocaleString()+' km', 'Farthest Apogee', fmtDate(apogee), '#7c3aed') +
+    sc(fmtDur(bestDark.darkSkyMin), 'Best Dark Sky', fmtDate(bestDark) + ' · new moon + darkness', '#34d399') +
+    sc(newMoons.length, 'New Moons', newMoons.map(d=>MONTHS[d.date.getUTCMonth()]+' '+d.date.getUTCDate()).join(' · ')||'—', '#4b5563');
+}
+
+function buildMoonCalGrid() {
+  const container = document.getElementById('moonCalGrid');
+  let html = '<div style="overflow-x:auto"><table class="moon-cal-table"><thead><tr>';
+  html += '<th></th>'; // month label col
+  for (let day = 1; day <= 31; day++) html += `<th>${day}</th>`;
+  html += '</tr></thead><tbody>';
+
+  for (let m = 0; m < 12; m++) {
+    html += `<tr><td style="text-align:left;padding:2px 6px;white-space:nowrap;font-family:var(--font-hd);font-size:0.52rem;color:var(--muted);letter-spacing:.1em">${MONTHS[m].toUpperCase()}</td>`;
+    const daysInMon = new Date(Date.UTC(LOC.year, m+1, 0)).getUTCDate();
+    for (let day = 1; day <= 31; day++) {
+      if (day > daysInMon) { html += '<td></td>'; continue; }
+      const doy = Math.round((new Date(Date.UTC(LOC.year,m,day)) - new Date(Date.UTC(LOC.year,0,1))) / 86400000);
+      const md  = moonData[Math.min(doy, moonData.length-1)];
+      const sel = selectedDoy === doy ? ' selected-day' : '';
+      const illPct = Math.round(md.illumination * 100);
+      html += `<td class="${sel}" data-doy="${doy}" onclick="selectDate(${doy})">
+        <div class="moon-cell">
+          <span class="moon-icon">${md.emoji}</span>
+          <span class="moon-day-num">${day}</span>
+          <span class="moon-illum">${illPct}%</span>
+        </div></td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+function drawMChart1() {
+  // Chart II: Max daily lunar elevation across the year
+  const canvas = document.getElementById('mChart1');
+  if (!canvas) return;
+  const DPR = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth * DPR, H = 220*DPR;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const P = { t:18*DPR, r:38*DPR, b:32*DPR, l:52*DPR };
+  const CW = W-P.l-P.r, CH = H-P.t-P.b;
+  const xOf  = doy => P.l + (doy / (data.length-1)) * CW;
+  const elevs = moonData.map(d => d.maxMoonElev);
+  const minE  = Math.min(...elevs) - 3;
+  const maxE  = Math.max(...elevs) + 3;
+  const yOf  = el => P.t + CH - ((el - minE) / (maxE - minE)) * CH;
+
+  // Fill under curve
+  ctx.beginPath();
+  moonData.forEach((md,i) => {
+    const x = xOf(md.doy), y = yOf(md.maxMoonElev);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.lineTo(xOf(data.length-1), P.t+CH);
+  ctx.lineTo(xOf(0), P.t+CH);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, P.t, 0, P.t+CH);
+  grad.addColorStop(0, 'rgba(167,139,250,0.2)');
+  grad.addColorStop(1, 'rgba(167,139,250,0.02)');
+  ctx.fillStyle = grad; ctx.fill();
+
+  // Horizon line
+  if (minE < 0) {
+    const y0 = yOf(0);
+    ctx.beginPath(); ctx.moveTo(P.l, y0); ctx.lineTo(P.l+CW, y0);
+    ctx.strokeStyle='rgba(96,197,255,0.35)'; ctx.lineWidth=1.5*DPR;
+    ctx.setLineDash([4*DPR,4*DPR]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='rgba(96,197,255,0.4)'; ctx.font=`${8*DPR}px IBM Plex Mono`;
+    ctx.fillText('0°', P.l+3*DPR, y0-4*DPR);
+  }
+
+  // Full moon vertical markers
+  moonData.forEach(md => {
+    if (md.isFull) {
+      const x = xOf(md.doy);
+      ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
+      ctx.strokeStyle='rgba(240,249,255,0.18)'; ctx.lineWidth=1*DPR;
+      ctx.setLineDash([2*DPR,4*DPR]); ctx.stroke(); ctx.setLineDash([]);
+    }
+  });
+
+  // Elevation curve
+  ctx.beginPath();
+  moonData.forEach((md,i) => {
+    const x = xOf(md.doy), y = yOf(md.maxMoonElev);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle='rgba(167,139,250,0.9)'; ctx.lineWidth=2.5*DPR; ctx.lineJoin='round'; ctx.stroke();
+
+  // Y-axis grid
+  ctx.setLineDash([2*DPR,5*DPR]);
+  for (let el = Math.ceil(minE/10)*10; el <= maxE; el += 10) {
+    const y = yOf(el);
+    ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
+    ctx.strokeStyle='rgba(27,44,71,0.7)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(61,88,112,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    ctx.fillText(el+'°', P.l-ctx.measureText(el+'°').width-4*DPR, y+3*DPR);
+  }
+  ctx.setLineDash([]);
+
+  // Selected day dot
+  if (selectedDoy != null && moonData[selectedDoy]) {
+    const md = moonData[selectedDoy];
+    const x = xOf(md.doy), y = yOf(md.maxMoonElev);
+    ctx.beginPath(); ctx.arc(x,y,5*DPR,0,Math.PI*2);
+    ctx.fillStyle='#ff4fc8'; ctx.shadowBlur=10*DPR; ctx.shadowColor='#ff4fc8'; ctx.fill(); ctx.shadowBlur=0;
+    ctx.fillStyle='#ff4fc8'; ctx.font=`bold ${9*DPR}px IBM Plex Mono`;
+    ctx.textAlign='center';
+    ctx.fillText(md.maxMoonElev.toFixed(1)+'°', x, y-9*DPR);
+    ctx.textAlign='left';
+  }
+
+  drawMonthGrid(ctx, xOf, P, CH, DPR);
+  drawSelLine(ctx, xOf, P, CH, DPR, 'rgba(255,79,200,0.85)');
+}
+
+function drawMChart3() {
+  // Chart III: Earth-Moon distance, perigee/apogee, supermoons
+  const canvas = document.getElementById('mChart3');
+  if (!canvas) return;
+  const DPR = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth * DPR, H = 220*DPR;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const P = { t:18*DPR, r:38*DPR, b:32*DPR, l:66*DPR };
+  const CW = W-P.l-P.r, CH = H-P.t-P.b;
+  const xOf  = doy => P.l + (doy / (data.length-1)) * CW;
+  const dists = moonData.map(d => d.dist);
+  const minD  = Math.min(...dists) - 3000;
+  const maxD  = Math.max(...dists) + 3000;
+  const yOf  = d => P.t + CH - ((d - minD) / (maxD - minD)) * CH;
+
+  const SUPER_THRESH = 362000;
+  const MICRO_THRESH = 405000;
+
+  // Supermoon threshold zone fill (below threshold)
+  const ySuper = yOf(SUPER_THRESH);
+  const grad2 = ctx.createLinearGradient(0, P.t+CH, 0, ySuper);
+  grad2.addColorStop(0, 'rgba(244,63,94,0.03)');
+  grad2.addColorStop(1, 'rgba(244,63,94,0.08)');
+  ctx.fillStyle = grad2;
+  ctx.fillRect(P.l, ySuper, CW, P.t+CH - ySuper);
+
+  // Supermoon threshold line
+  ctx.beginPath(); ctx.moveTo(P.l, ySuper); ctx.lineTo(P.l+CW, ySuper);
+  ctx.strokeStyle='rgba(244,63,94,0.55)'; ctx.lineWidth=1.5*DPR;
+  ctx.setLineDash([5*DPR,4*DPR]); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='rgba(244,63,94,0.7)'; ctx.font=`${8*DPR}px IBM Plex Mono`;
+  ctx.textAlign='right';
+  ctx.fillText('SUPERMOON ≤362,000km', P.l+CW-4*DPR, ySuper-4*DPR);
+  ctx.textAlign='left';
+
+  // Micromoon threshold line
+  const yMicro = yOf(MICRO_THRESH);
+  ctx.beginPath(); ctx.moveTo(P.l, yMicro); ctx.lineTo(P.l+CW, yMicro);
+  ctx.strokeStyle='rgba(124,58,237,0.35)'; ctx.lineWidth=1*DPR;
+  ctx.setLineDash([4*DPR,4*DPR]); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='rgba(124,58,237,0.5)'; ctx.font=`${8*DPR}px IBM Plex Mono`;
+  ctx.textAlign='right';
+  ctx.fillText('MICROMOON ≥405,000km', P.l+CW-4*DPR, yMicro+12*DPR);
+  ctx.textAlign='left';
+
+  // Fill under curve
+  ctx.beginPath();
+  moonData.forEach((md,i) => {
+    const x=xOf(md.doy), y=yOf(md.dist);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.lineTo(xOf(data.length-1), P.t+CH);
+  ctx.lineTo(xOf(0), P.t+CH);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, P.t, 0, P.t+CH);
+  grad.addColorStop(0, 'rgba(196,181,253,0.15)');
+  grad.addColorStop(1, 'rgba(196,181,253,0.02)');
+  ctx.fillStyle = grad; ctx.fill();
+
+  // Distance curve
+  ctx.beginPath();
+  moonData.forEach((md,i) => {
+    const x=xOf(md.doy), y=yOf(md.dist);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle='rgba(196,181,253,0.85)'; ctx.lineWidth=2*DPR; ctx.lineJoin='round'; ctx.stroke();
+
+  // Supermoon event dots
+  moonData.forEach(md => {
+    if (md.isSuper) {
+      const x=xOf(md.doy), y=yOf(md.dist);
+      ctx.beginPath(); ctx.arc(x,y,6*DPR,0,Math.PI*2);
+      ctx.fillStyle='#f43f5e'; ctx.shadowBlur=12*DPR; ctx.shadowColor='#f43f5e'; ctx.fill(); ctx.shadowBlur=0;
+      ctx.fillStyle='#f43f5e'; ctx.font=`bold ${8*DPR}px Orbitron`;
+      ctx.textAlign='center';
+      ctx.fillText('SUPER', x, y-10*DPR);
+      ctx.fillText(MONTHS[md.date.getUTCMonth()]+' '+md.date.getUTCDate(), x, y-20*DPR);
+      ctx.textAlign='left';
+    }
+    if (md.isMicro) {
+      const x=xOf(md.doy), y=yOf(md.dist);
+      ctx.beginPath(); ctx.arc(x,y,5*DPR,0,Math.PI*2);
+      ctx.fillStyle='rgba(124,58,237,0.85)'; ctx.fill();
+      ctx.fillStyle='rgba(124,58,237,0.85)'; ctx.font=`bold ${7*DPR}px Orbitron`;
+      ctx.textAlign='center';
+      ctx.fillText('MICRO', x, y+16*DPR);
+      ctx.textAlign='left';
+    }
+  });
+
+  // Y-axis grid (distance labels in km)
+  ctx.setLineDash([2*DPR,5*DPR]);
+  const tickStep = 10000;
+  for (let d = Math.ceil(minD/tickStep)*tickStep; d <= maxD; d += tickStep) {
+    const y = yOf(d);
+    if (y < P.t || y > P.t+CH) continue;
+    ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
+    ctx.strokeStyle='rgba(27,44,71,0.65)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(61,88,112,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    const lbl = (d/1000).toFixed(0)+'k';
+    ctx.fillText(lbl, P.l-ctx.measureText(lbl).width-4*DPR, y+3*DPR);
+  }
+  ctx.setLineDash([]);
+
+  // Y axis label
+  ctx.save();
+  ctx.fillStyle='rgba(61,88,112,0.6)'; ctx.font=`${8*DPR}px IBM Plex Mono`;
+  ctx.textAlign='center';
+  ctx.translate(P.l-52*DPR, P.t+CH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('Distance (km)', 0, 0);
+  ctx.restore();
+
+  // Selected day dot
+  if (selectedDoy != null && moonData[selectedDoy]) {
+    const md = moonData[selectedDoy];
+    const x=xOf(md.doy), y=yOf(md.dist);
+    ctx.beginPath(); ctx.arc(x,y,5*DPR,0,Math.PI*2);
+    ctx.fillStyle='#ff4fc8'; ctx.shadowBlur=10*DPR; ctx.shadowColor='#ff4fc8'; ctx.fill(); ctx.shadowBlur=0;
+  }
+
+  drawMonthGrid(ctx, xOf, P, CH, DPR);
+  drawSelLine(ctx, xOf, P, CH, DPR, 'rgba(255,79,200,0.85)');
+}
+
+function drawMChart2() {
+  const canvas = document.getElementById('mChart2');
+  if (!canvas) return;
+  const DPR = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth * DPR, H = 200*DPR;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const P = { t:18*DPR, r:50*DPR, b:32*DPR, l:50*DPR };
+  const CW = W-P.l-P.r, CH = H-P.t-P.b;
+  const xOf = doy => P.l + (doy / (data.length-1)) * CW;
+  const yOfI = pct => P.t + CH - (pct/100) * CH;   // illumination axis
+  const yOfD = min => P.t + CH - (min/1440) * CH;  // dark sky minutes axis
+
+  // Dark sky minutes bars (background)
+  const maxDark = Math.max(...moonData.map(d=>d.darkSkyMin));
+  for (const md of moonData) {
+    const x = xOf(md.doy), bw = CW/(data.length-1)+1;
+    const h = (md.darkSkyMin / maxDark) * CH;
+    ctx.fillStyle = 'rgba(30,27,75,0.8)';
+    ctx.fillRect(x, P.t+CH-h, bw, h);
+  }
+
+  // Moonlit night bars (illumination > 50% AND some darkness)
+  for (const md of moonData) {
+    if (md.illumination > 0.5 && md.darkSkyMin > 0) {
+      const x = xOf(md.doy), bw = CW/(data.length-1)+1;
+      const h = (md.illumination) * CH * 0.5;
+      ctx.fillStyle = 'rgba(124,58,237,0.4)';
+      ctx.fillRect(x, P.t+CH-h, bw, h);
+    }
+  }
+
+  // Illumination line
+  ctx.beginPath(); let f=true;
+  for (const md of moonData) {
+    const x=xOf(md.doy), y=yOfI(md.illumination*100);
+    f?(ctx.moveTo(x,y),f=false):ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='rgba(240,249,255,0.85)'; ctx.lineWidth=2*DPR; ctx.lineJoin='round'; ctx.stroke();
+
+  // Right axis (dark sky minutes)
+  const maxDarkH = maxDark/60;
+  [0,2,4,6,8].forEach(h => {
+    if (h > maxDarkH+0.5) return;
+    const y = P.t + CH - (h*60/maxDark)*CH;
+    ctx.fillStyle='rgba(52,211,153,0.45)'; ctx.font=`${8*DPR}px IBM Plex Mono`;
+    ctx.fillText(h+'h', P.l+CW+4*DPR, y+3*DPR);
+  });
+
+  // Left axis (illumination %)
+  ctx.setLineDash([2*DPR,5*DPR]);
+  [0,25,50,75,100].forEach(pct => {
+    const y = yOfI(pct);
+    ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
+    ctx.strokeStyle='rgba(27,44,71,0.6)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(61,88,112,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    const lbl=pct+'%'; ctx.fillText(lbl, P.l-ctx.measureText(lbl).width-4*DPR, y+3*DPR);
+  });
+  ctx.setLineDash([]);
+
+  // Full moon vertical markers
+  moonData.forEach(md => {
+    if (md.age >= 13.8 && md.age <= 15.2) {
+      const x = xOf(md.doy);
+      ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
+      ctx.strokeStyle='rgba(167,139,250,0.25)'; ctx.lineWidth=1.5*DPR;
+      ctx.setLineDash([3*DPR,3*DPR]); ctx.stroke(); ctx.setLineDash([]);
+    }
+  });
+
+  drawMonthGrid(ctx, xOf, P, CH, DPR);
+  if (selectedDoy != null) {
+    const x = xOf(selectedDoy);
+    ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
+    ctx.strokeStyle='rgba(255,79,200,0.85)'; ctx.lineWidth=2*DPR; ctx.stroke();
+  }
+}
+
+function updateMoonDayDetail(doy) {
+  const md = moonData[doy];
+  const d  = data[doy];
+  if (!md) return;
+  const el = document.getElementById('moonDayDetail');
+  const mon = MFULL[d.date.getUTCMonth()], day = d.date.getUTCDate();
+  const tz  = tzLabel(d.off);
+
+  const row = (k,v,c) =>
+    `<div class="pw"><div class="pw-dot" style="background:${c||'#a78bfa'}"></div>
+     <div><span style="color:#fff;font-weight:600;font-size:.62rem">${k}</span>
+     <span style="color:${c||'#a78bfa'};font-size:.62rem;margin-left:8px">${v}</span></div></div>`;
+
+  el.innerHTML = `<h4 style="color:#a78bfa">Moon — ${mon} ${day}, ${LOC.year} · ${tz}</h4>
+    ${row('Phase', md.phaseName + ' ' + md.emoji, '#a78bfa')}
+    ${row('Illumination', Math.round(md.illumination*100)+'%', '#f0f9ff')}
+    ${row('Moon Age', md.age.toFixed(1) + ' days into cycle', '#7c3aed')}
+    ${row('Distance', Math.round(md.dist).toLocaleString() + ' km' + (md.isSuper ? ' 🔴 SUPERMOON' : md.isMicro ? ' 🔵 MICROMOON' : ''), md.isSuper ? '#f43f5e' : md.isMicro ? '#7c3aed' : '#c4b5fd')}
+    ${row('Moonrise', md.upAllDay ? 'Up all day' : md.moonrise != null ? minToStr(md.moonrise) : 'Does not rise', '#a78bfa')}
+    ${row('Moonset',  md.upAllDay ? 'Up all day' : md.moonset  != null ? minToStr(md.moonset)  : 'Does not set',  '#7c3aed')}
+    ${row('Max Elevation', md.maxMoonElev.toFixed(1)+'°', '#c084fc')}
+    ${row('Dark Sky', md.darkSkyMin > 0 ? fmtDur(md.darkSkyMin) + ' (astro dark + moon below horizon)' : 'None — moon up during all darkness', md.darkSkyMin > 60 ? '#34d399' : '#6b7280')}`;
+}
+
+function renderMoonTab() {
+  buildMoonStats();
+  buildMoonCalGrid();
+  drawMChart1();
+  drawMChart3();
+  drawMChart2();
+  if (selectedDoy != null) updateMoonDayDetail(selectedDoy);
+}
+
+['sChart1','sChart3','sChart4','pChart1','pChart2','mChart1','mChart2','mChart3'].forEach(bindChart);
+
+// Update the UTC offset display badge for a given date
+function updateTzDisplay(date) {
+  const off = getOffset(date || new Date(Date.UTC(LOC.year, 0, 1)));
+  const label = tzLabel(off);
+  const dst = (() => {
+    // Check if offset differs from standard (Jan 1) offset — indicates DST
+    const stdOff = getOffset(new Date(Date.UTC(LOC.year, 0, 1)));
+    return off !== stdOff ? ' DST' : '';
+  })();
+  const el = document.getElementById('tzDisplay');
+  if (el) el.textContent = `${label}${dst}  ·  ${LOC.ianaZone}`;
+}
+
+function setStatus(msg, type='') {
+  const el = document.getElementById('locStatus');
+  el.textContent = msg;
+  el.className   = 'loc-status ' + type;
+}
+
+function updateCoordsBar() {
+  const lat  = LOC.lat;
+  const lon  = LOC.lon;
+  const latS = Math.abs(lat).toFixed(4) + '° ' + (lat >= 0 ? 'N' : 'S');
+  const lonS = Math.abs(lon).toFixed(4) + '° ' + (lon >= 0 ? 'E' : 'W');
+  // Show offset for today or selected date
+  const refDate = selectedDoy != null
+    ? data[selectedDoy].date
+    : new Date(Date.UTC(LOC.year, 0, 1));
+  const off = getOffset(refDate);
+  document.getElementById('coordsBar').textContent =
+    `${latS} · ${lonS} · ${tzLabel(off)} · ${LOC.ianaZone} · ${LOC.year} · ${LOC.name}`;
+  document.title = `Solar Planner — ${LOC.name} ${LOC.year}`;
+}
+
+function syncInputsToLOC() {
+  document.getElementById('latInput').value  = LOC.lat.toFixed(4);
+  document.getElementById('lonInput').value  = LOC.lon.toFixed(4);
+  document.getElementById('yearInput').value = LOC.year;
+  // Update the tz display for current selected date
+  const refDate = selectedDoy != null && data[selectedDoy]
+    ? data[selectedDoy].date
+    : new Date(Date.UTC(LOC.year, 0, 1));
+  updateTzDisplay(refDate);
+}
+
+// Full rebuild — recompute data, refresh all UI
+function fullRebuild(newLOC) {
+  Object.assign(LOC, newLOC);
+  const overlay = document.getElementById('rebuildOverlay');
+  overlay.classList.add('show');
+  setTimeout(() => {
+    try {
+      data = buildData();
+      moonData = buildMoonData();
+      rebuildMonthStarts();
+      // Reset to today if year matches, otherwise Jan 1
+      const td = new Date();
+      selectedDoy = (td.getFullYear() === LOC.year)
+        ? Math.round((new Date(Date.UTC(LOC.year, td.getMonth(), td.getDate())) - new Date(Date.UTC(LOC.year,0,1))) / 86400000)
+        : 0;
+      calMonth = data[selectedDoy].date.getUTCMonth();
+      syncInputsToLOC();
+      updateCoordsBar();
+      buildStats();
+      buildCalendar();
+      renderAllCharts();
+      updateDayDetail(selectedDoy);
+      setStatus(`✓ Loaded: ${LOC.name} · ${LOC.ianaZone}`, 'ok');
+    } catch(e) {
+      setStatus('Error rebuilding data: ' + e.message, 'err');
+    }
+    overlay.classList.remove('show');
+  }, 30);
+}
+
+// Apply button — reads lat/lon/year, fetches IANA zone, then rebuilds
+async function applyLocation() {
+  const lat  = parseFloat(document.getElementById('latInput').value);
+  const lon  = parseFloat(document.getElementById('lonInput').value);
+  const year = parseInt(document.getElementById('yearInput').value, 10);
+
+  if (isNaN(lat) || lat < -90 || lat > 90)
+    return setStatus('Latitude must be between −90 and 90', 'err');
+  if (isNaN(lon) || lon < -180 || lon > 180)
+    return setStatus('Longitude must be between −180 and 180', 'err');
+  if (isNaN(year) || year < 2000 || year > 2099)
+    return setStatus('Year must be between 2000 and 2099', 'err');
+
+  setStatus('Looking up timezone…', 'busy');
+  document.getElementById('applyBtn').disabled = true;
+
+  let zone = await fetchIANAZone(lat, lon);
+  if (!zone) {
+    // Fallback: build a fixed-offset pseudo-zone using longitude
+    const estOff = Math.round(lon / 15);
+    zone = `Etc/GMT${estOff >= 0 ? '-' : '+'}${Math.abs(estOff)}`; // Etc/GMT sign is inverted
+    setStatus(`⚠ Timezone lookup failed — using longitude estimate (${zone})`, 'err');
+  }
+
+  document.getElementById('applyBtn').disabled = false;
+  fullRebuild({ lat, lon, ianaZone: zone, year, name: LOC.name });
+}
+
+// GPS button handler
+async function useGPS() {
+  if (!navigator.geolocation) return setStatus('Geolocation not available in this browser', 'err');
+  setStatus('Acquiring GPS…', 'busy');
+  document.getElementById('gpsBtn').disabled = true;
+
+  navigator.geolocation.getCurrentPosition(
+    async pos => {
+      const lat = parseFloat(pos.coords.latitude.toFixed(4));
+      const lon = parseFloat(pos.coords.longitude.toFixed(4));
+      document.getElementById('latInput').value = lat;
+      document.getElementById('lonInput').value = lon;
+
+      setStatus('GPS acquired — looking up timezone…', 'busy');
+      let zone = await fetchIANAZone(lat, lon);
+      if (!zone) {
+        const estOff = Math.round(lon / 15);
+        zone = `Etc/GMT${estOff >= 0 ? '-' : '+'}${Math.abs(estOff)}`;
+      }
+      LOC.ianaZone = zone;
+      LOC.name = `${lat.toFixed(3)}°, ${lon.toFixed(3)}°`;
+      document.getElementById('gpsBtn').disabled = false;
+      updateTzDisplay(new Date(Date.UTC(LOC.year, 0, 1)));
+      setStatus(`GPS: ${lat}°, ${lon}° · ${zone} — click Apply to load`, 'ok');
+    },
+    err => {
+      document.getElementById('gpsBtn').disabled = false;
+      setStatus('GPS error: ' + err.message, 'err');
+    },
+    { timeout: 10000 }
+  );
+}
+
+// ── City search (Nominatim + local fallback) ──────────────────
+
+const LOCAL_CITIES = [
+  // Alaska
+  {name:'Fairbanks, AK',          lat:64.8378,  lon:-147.7164, ianaZone:'America/Anchorage'},
+  {name:'Anchorage, AK',          lat:61.2181,  lon:-149.9003, ianaZone:'America/Anchorage'},
+  {name:'Juneau, AK',             lat:58.3005,  lon:-134.4197, ianaZone:'America/Juneau'},
+  {name:'Barrow / Utqiaġvik, AK', lat:71.2906,  lon:-156.7887, ianaZone:'America/Anchorage'},
+  {name:'Nome, AK',               lat:64.5011,  lon:-165.4064, ianaZone:'America/Nome'},
+  {name:'Kodiak, AK',             lat:57.7900,  lon:-152.4072, ianaZone:'America/Anchorage'},
+  {name:'Clear SFS, AK',          lat:64.3401,  lon:-149.19,   ianaZone:'America/Anchorage'},
+  {name:'Prudhoe Bay, AK',        lat:70.2553,  lon:-148.3372, ianaZone:'America/Anchorage'},
+  {name:'Denali, AK',             lat:63.1148,  lon:-151.1926, ianaZone:'America/Anchorage'},
+  // Canada
+  {name:'Whitehorse, YT',         lat:60.7212,  lon:-135.0568, ianaZone:'America/Whitehorse'},
+  {name:'Yellowknife, NT',        lat:62.4540,  lon:-114.3718, ianaZone:'America/Yellowknife'},
+  {name:'Vancouver, BC',          lat:49.2827,  lon:-123.1207, ianaZone:'America/Vancouver'},
+  // Norway / Arctic
+  {name:'Tromsø, Norway',         lat:69.6492,  lon:18.9553,   ianaZone:'Europe/Oslo'},
+  {name:'Longyearbyen, Svalbard', lat:78.2232,  lon:15.6267,   ianaZone:'Arctic/Longyearbyen'},
+  {name:'Murmansk, Russia',       lat:68.9585,  lon:33.0827,   ianaZone:'Europe/Moscow'},
+  // Iceland / Greenland
+  {name:'Reykjavik, Iceland',     lat:64.1355,  lon:-21.8954,  ianaZone:'Atlantic/Reykjavik'},
+  {name:'Nuuk, Greenland',        lat:64.1814,  lon:-51.6942,  ianaZone:'America/Nuuk'},
+  // North America
+  {name:'Seattle, WA',            lat:47.6062,  lon:-122.3321, ianaZone:'America/Los_Angeles'},
+  {name:'Denver, CO',             lat:39.7392,  lon:-104.9903, ianaZone:'America/Denver'},
+  {name:'Colorado Springs, CO',   lat:38.8339,  lon:-104.8214, ianaZone:'America/Denver'},
+  {name:'Chicago, IL',            lat:41.8781,  lon:-87.6298,  ianaZone:'America/Chicago'},
+  {name:'New York, NY',           lat:40.7128,  lon:-74.0060,  ianaZone:'America/New_York'},
+  {name:'Honolulu, HI',           lat:21.3069,  lon:-157.8583, ianaZone:'Pacific/Honolulu'},
+  // Europe
+  {name:'London, UK',             lat:51.5074,  lon:-0.1278,   ianaZone:'Europe/London'},
+  {name:'Oslo, Norway',           lat:59.9139,  lon:10.7522,   ianaZone:'Europe/Oslo'},
+  {name:'Helsinki, Finland',      lat:60.1699,  lon:24.9384,   ianaZone:'Europe/Helsinki'},
+  {name:'Stockholm, Sweden',      lat:59.3293,  lon:18.0686,   ianaZone:'Europe/Stockholm'},
+  // Other
+  {name:'Tokyo, Japan',           lat:35.6762,  lon:139.6503,  ianaZone:'Asia/Tokyo'},
+  {name:'Sydney, Australia',      lat:-33.8688, lon:151.2093,  ianaZone:'Australia/Sydney'},
+  {name:'Ushuaia, Argentina',     lat:-54.8019, lon:-68.3030,  ianaZone:'America/Argentina/Ushuaia'},
+];
+
+let nominatimTimer = null;
+let suggestionsData = [];
+
+function filterLocal(query) {
+  const q = query.toLowerCase();
+  return LOCAL_CITIES.filter(c => c.name.toLowerCase().includes(q)).slice(0, 6);
+}
+
+async function fetchNominatim(query) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1`;
+    const res = await fetch(url, { headers:{'Accept-Language':'en'} });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.map(r => ({
+      name: r.display_name.split(',').slice(0,3).join(',').trim(),
+      lat:  parseFloat(parseFloat(r.lat).toFixed(4)),
+      lon:  parseFloat(parseFloat(r.lon).toFixed(4)),
+      off:  Math.round(parseFloat(r.lon) / 15 * 2) / 2,  // rough estimate
+    }));
+  } catch { return []; }
+}
+
+function showSuggestions(items) {
+  const box = document.getElementById('citySuggestions');
+  suggestionsData = items;
+  if (!items.length) { box.style.display = 'none'; return; }
+
+  box.innerHTML = items.map((c,i) =>
+    `<div class="loc-sug-item" data-i="${i}">
+      <strong>${c.name.split(',')[0]}</strong>
+      <span> ${c.name.split(',').slice(1).join(',').trim()}</span>
+      <span style="float:right;color:var(--muted)">${c.lat.toFixed(2)}, ${c.lon.toFixed(2)}</span>
+    </div>`
+  ).join('');
+
+  box.querySelectorAll('.loc-sug-item').forEach(el => {
+    el.addEventListener('mousedown', e => {
+      e.preventDefault();
+      pickSuggestion(parseInt(el.dataset.i));
+    });
+  });
+
+  // Position below the input
+  const wrap = document.getElementById('cityWrap');
+  box.style.display = 'block';
+  box.style.top     = (wrap.offsetHeight) + 'px';
+  box.style.left    = '0';
+  box.style.width   = wrap.offsetWidth + 'px';
+}
+
+async function pickSuggestion(i) {
+  const c = suggestionsData[i];
+  document.getElementById('cityInput').value = c.name;
+  document.getElementById('latInput').value  = c.lat;
+  document.getElementById('lonInput').value  = c.lon;
+  document.getElementById('citySuggestions').style.display = 'none';
+  LOC.name = c.name;
+
+  setStatus('Looking up timezone…', 'busy');
+
+  // Use stored IANA zone if city list has one, otherwise fetch
+  let zone = c.ianaZone || await fetchIANAZone(c.lat, c.lon);
+  if (!zone) {
+    const estOff = Math.round(c.lon / 15);
+    zone = `Etc/GMT${estOff >= 0 ? '-' : '+'}${Math.abs(estOff)}`;
+    setStatus(`⚠ Timezone lookup failed — using estimate (${zone}). Click Apply.`, 'err');
+  } else {
+    setStatus(`✓ ${c.name} · ${zone} — click Apply to load`, 'ok');
+  }
+  LOC.ianaZone = zone;
+  updateTzDisplay(new Date(Date.UTC(LOC.year, 0, 1)));
+}
+
+// Wire city input events
+const cityInput = document.getElementById('cityInput');
+cityInput.addEventListener('input', () => {
+  clearTimeout(nominatimTimer);
+  const q = cityInput.value.trim();
+  if (q.length < 2) {
+    document.getElementById('citySuggestions').style.display = 'none';
+    return;
+  }
+  // Show local matches immediately
+  const local = filterLocal(q);
+  showSuggestions(local);
+  // Then fetch from Nominatim after short delay
+  nominatimTimer = setTimeout(async () => {
+    setStatus('Searching…', 'busy');
+    const remote = await fetchNominatim(q);
+    const merged = [...local];
+    for (const r of remote) {
+      if (!merged.some(l => Math.abs(l.lat-r.lat)<0.05 && Math.abs(l.lon-r.lon)<0.05))
+        merged.push(r);
+    }
+    showSuggestions(merged.slice(0,8));
+    setStatus('', '');
+  }, 500);
+});
+
+cityInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('citySuggestions').style.display = 'none';
+  if (e.key === 'Enter' && suggestionsData.length > 0) { e.preventDefault(); pickSuggestion(0); }
+});
+
+cityInput.addEventListener('blur', () => {
+  setTimeout(() => { document.getElementById('citySuggestions').style.display = 'none'; }, 150);
+});
+
+// Year input: Enter to apply
+document.getElementById('yearInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') applyLocation();
+});
+
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+syncInputsToLOC();
+moonData = buildMoonData();
+updateTzDisplay(data[selectedDoy].date);
+updateCoordsBar();
+buildStats();
+buildCalendar();
+renderAllCharts();
+updateDayDetail(selectedDoy);
+setStatus('Default: Clear SFS, Alaska — search a city or enter coordinates to change location', 'ok');
+
+window.addEventListener('resize', () => {
+  renderAllCharts();
+  drawArc(selectedDoy);
+});
+</script>
+<!-- ═══════════════════════ PWA INSTALL BANNER ═══════════════════════ -->
+<div id="pwa-banner" class="hidden" role="dialog" aria-label="Install app">
+  <span class="pwa-icon">📡</span>
+  <div class="pwa-text">
+    <strong>Install Solar Planner</strong><br>
+    Add to home screen for offline use
+  </div>
+  <div class="pwa-btns">
+    <button id="pwa-install-btn">Install</button>
+    <button id="pwa-dismiss-btn">✕</button>
+  </div>
+</div>
+
+<script>
+// ── Service Worker registration ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
+
+// ── PWA install prompt ──
+let _deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _deferredPrompt = e;
+  // Only show if not already installed and not previously dismissed
+  if (!localStorage.getItem('pwa-dismissed')) {
+    setTimeout(() => {
+      document.getElementById('pwa-banner').classList.remove('hidden');
+    }, 3000); // show after 3s so it doesn't interrupt initial load
+  }
+});
+
+document.getElementById('pwa-install-btn').addEventListener('click', async () => {
+  if (!_deferredPrompt) return;
+  _deferredPrompt.prompt();
+  const { outcome } = await _deferredPrompt.userChoice;
+  _deferredPrompt = null;
+  document.getElementById('pwa-banner').classList.add('hidden');
+});
+
+document.getElementById('pwa-dismiss-btn').addEventListener('click', () => {
+  document.getElementById('pwa-banner').classList.add('hidden');
+  localStorage.setItem('pwa-dismissed', '1');
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwa-banner').classList.add('hidden');
+  _deferredPrompt = null;
+});
+</script>
+
+</body>
+</html>
