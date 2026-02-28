@@ -1179,8 +1179,8 @@ footer {
 
 <script>
 'use strict';
-const BUILD_VERSION = 'solar-planner-20260228_190543';
-const BUILD_DATE = '2026-02-28 19:05 UTC';
+const BUILD_VERSION = 'solar-planner-20260228_191244';
+const BUILD_DATE = '2026-02-28 19:12 UTC';
 // ══════════════════════════════════════════════════════════════
 //  LOCATION STATE  — mutable, drives all calculations
 // ══════════════════════════════════════════════════════════════
@@ -2341,6 +2341,7 @@ function getTooltipHTML(doy) {
 
 function showTooltip(doy, clientX, clientY) {
   ttEl.innerHTML = getTooltipHTML(doy);
+  ttEl.style.position = 'fixed';  // desktop always fixed
   ttEl.style.display = 'block';
   const ttW=220, ttH=220;
   let lx=clientX+16, ly=clientY-10;
@@ -2348,6 +2349,9 @@ function showTooltip(doy, clientX, clientY) {
   if (ly+ttH>window.innerHeight-8) ly=window.innerHeight-ttH-8;
   ttEl.style.left=lx+'px'; ttEl.style.top=ly+'px';
 }
+
+// Track which canvas last triggered a touch tooltip so we can dismiss correctly
+let _activeTouchCanvas = null;
 
 function bindChart(canvasId) {
   const canvas = document.getElementById(canvasId);
@@ -2364,42 +2368,68 @@ function bindChart(canvasId) {
   });
   canvas.addEventListener('mouseleave', () => { ttEl.style.display = 'none'; });
 
-  // ── Touch: show tooltip while finger is on the chart, never block scroll ──
-  // All listeners use passive:true so native scroll is completely unobstructed.
+  // ── Touch: tooltip follows finger while pressed, stays on release ──
+  // All passive — never blocks scroll.
   canvas.addEventListener('touchstart', e => {
     const t = e.touches[0];
-    showTouchTooltip(getDoy(t.clientX), canvas);
+    _activeTouchCanvas = canvas;
+    anchorTouchTooltip(getDoy(t.clientX), canvas);
   }, { passive: true });
 
   canvas.addEventListener('touchmove', e => {
     const t = e.touches[0];
-    showTouchTooltip(getDoy(t.clientX), canvas);
+    anchorTouchTooltip(getDoy(t.clientX), canvas);
   }, { passive: true });
 
-  canvas.addEventListener('touchend',    () => { ttEl.style.display = 'none'; }, { passive: true });
-  canvas.addEventListener('touchcancel', () => { ttEl.style.display = 'none'; }, { passive: true });
+  // On release: keep tooltip visible, anchored to canvas — dismiss on next tap elsewhere
+  canvas.addEventListener('touchend', () => {
+    anchorTouchTooltip(null, canvas); // re-anchor without changing content
+  }, { passive: true });
+
+  canvas.addEventListener('touchcancel', () => {
+    ttEl.style.display = 'none';
+    _activeTouchCanvas = null;
+  }, { passive: true });
 }
 
-// Touch tooltip: centered horizontally over the canvas, just above its top edge
-function showTouchTooltip(doy, canvas) {
-  ttEl.innerHTML = getTooltipHTML(doy);
+// Dismiss touch tooltip when user taps anywhere outside a chart
+document.addEventListener('touchstart', e => {
+  if (_activeTouchCanvas && !e.target.closest('canvas')) {
+    ttEl.style.display = 'none';
+    _activeTouchCanvas = null;
+  }
+}, { passive: true });
+
+// Position tooltip centered horizontally on the canvas, locked above (or below) it
+// doy=null means re-anchor without refreshing content
+function anchorTouchTooltip(doy, canvas) {
+  if (doy !== null) {
+    ttEl.innerHTML = getTooltipHTML(doy);
+  }
   ttEl.style.display = 'block';
 
-  const rect  = canvas.getBoundingClientRect();
-  const ttW   = ttEl.offsetWidth  || 220;
-  const ttH   = ttEl.offsetHeight || 200;
+  // Use scrollY + getBoundingClientRect so position is correct even when page is scrolled
+  const rect = canvas.getBoundingClientRect();
+  const scrollY = window.scrollY || window.pageYOffset;
+  const scrollX = window.scrollX || window.pageXOffset;
 
-  // Horizontally centered on the canvas
-  let lx = rect.left + rect.width / 2 - ttW / 2;
-  // Just above the canvas top, with a small gap
-  let ly = rect.top - ttH - 8;
+  const ttW = ttEl.offsetWidth  || 220;
+  const ttH = ttEl.offsetHeight || 180;
 
-  // If there's not enough room above, show below instead
-  if (ly < 8) ly = rect.bottom + 8;
+  // Centered horizontally on canvas
+  let lx = scrollX + rect.left + rect.width / 2 - ttW / 2;
+  // Above canvas by default
+  let ly = scrollY + rect.top - ttH - 10;
+  // Flip below if not enough room above the viewport top
+  if (rect.top - ttH - 10 < 8) {
+    ly = scrollY + rect.bottom + 10;
+  }
 
-  // Clamp horizontally to viewport
-  lx = Math.max(8, Math.min(lx, window.innerWidth - ttW - 8));
+  // Clamp horizontally within page
+  lx = Math.max(scrollX + 8, Math.min(lx, scrollX + window.innerWidth - ttW - 8));
 
+  // Switch tooltip to absolute positioning so it stays locked as the page scrolls
+  ttEl.style.position = 'absolute';
   ttEl.style.left = lx + 'px';
   ttEl.style.top  = ly + 'px';
 }
