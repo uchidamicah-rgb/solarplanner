@@ -1179,8 +1179,8 @@ footer {
 
 <script>
 'use strict';
-const BUILD_VERSION = 'solar-planner-20260228_185518';
-const BUILD_DATE = '2026-02-28 18:55 UTC';
+const BUILD_VERSION = 'solar-planner-20260228_185822';
+const BUILD_DATE = '2026-02-28 18:58 UTC';
 // ══════════════════════════════════════════════════════════════
 //  LOCATION STATE  — mutable, drives all calculations
 // ══════════════════════════════════════════════════════════════
@@ -2358,14 +2358,41 @@ function bindChart(canvasId) {
     return Math.min(data.length-1, Math.max(0, Math.round((clientX - rect.left) / rect.width * (data.length-1))));
   };
 
-  // Desktop: hover shows tooltip only — no click interaction
+  // ── Desktop: hover tooltip ──
   canvas.addEventListener('mousemove', e => {
     showTooltip(getDoy(e.clientX), e.clientX, e.clientY);
   });
   canvas.addEventListener('mouseleave', () => { ttEl.style.display = 'none'; });
 
-  // Touch: allow native scroll — no tooltip, no date selection
-  // (date selection is via the calendar only on touch devices)
+  // ── Touch: show tooltip while finger is on the chart, never block scroll ──
+  // All listeners use passive:true so native scroll is completely unobstructed.
+  canvas.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    showTouchTooltip(getDoy(t.clientX), t.clientX, t.clientY);
+  }, { passive: true });
+
+  canvas.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    showTouchTooltip(getDoy(t.clientX), t.clientX, t.clientY);
+  }, { passive: true });
+
+  canvas.addEventListener('touchend',    () => { ttEl.style.display = 'none'; }, { passive: true });
+  canvas.addEventListener('touchcancel', () => { ttEl.style.display = 'none'; }, { passive: true });
+}
+
+// Touch tooltip: positioned above the finger so the hand doesn't cover it
+function showTouchTooltip(doy, clientX, clientY) {
+  ttEl.innerHTML = getTooltipHTML(doy);
+  ttEl.style.display = 'block';
+  const ttW = 220, ttH = 200;
+  // Centre horizontally on finger, above it
+  let lx = clientX - ttW / 2;
+  let ly = clientY - ttH - 20;  // above finger
+  // Clamp to viewport
+  lx = Math.max(8, Math.min(lx, window.innerWidth - ttW - 8));
+  ly = Math.max(8, ly);
+  ttEl.style.left = lx + 'px';
+  ttEl.style.top  = ly + 'px';
 }
 
 
