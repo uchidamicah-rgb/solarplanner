@@ -335,8 +335,8 @@ canvas {
 
 /* ══════════════════════════════════════
    DATE PICKER PANEL
-   Desktop: calendar left | arc right (top row)
-            day detail spans full width (bottom row)
+   Desktop: left col = calendar stacked above day summary
+            right col = altitude plot (full height)
    Mobile:  single column stack
 ══════════════════════════════════════ */
 .picker-section {
@@ -347,25 +347,30 @@ canvas {
   margin-bottom: var(--sp-3);
   display: grid;
   grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto;
   gap: var(--sp-3) var(--sp-4);
   align-items: start;
 }
-/* Calendar: top-left */
-.picker-section .cal-col  { grid-column: 1; grid-row: 1; }
-/* Arc plot: top-right, spans down */
-.picker-section .arc-col  { grid-column: 2; grid-row: 1; }
-/* Day detail: full width below calendar and arc */
-.picker-section .day-detail { grid-column: 1 / -1; grid-row: 2; }
+/* Left column: calendar and day detail stacked */
+.picker-section .cal-col {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+/* Right column: arc plot */
+.picker-section .arc-col {
+  grid-column: 2;
+  grid-row: 1;
+}
+/* Day detail lives inside cal-col now (via HTML restructure) */
 
 @media (max-width: 700px) {
   .picker-section {
     grid-template-columns: 1fr;
-    grid-template-rows: auto;
   }
   .picker-section .cal-col,
-  .picker-section .arc-col,
-  .picker-section .day-detail { grid-column: 1; grid-row: auto; }
+  .picker-section .arc-col { grid-column: 1; grid-row: auto; }
 }
 
 .picker-col-label {
@@ -469,25 +474,20 @@ canvas {
 }
 .cal-cell.empty { cursor: default; pointer-events: none; }
 
-/* ── Day detail card — full width below calendar ── */
+/* ── Day detail card — stacked below calendar in left column ── */
 .day-detail { min-width: 0; }
 .day-detail-inner {
   background: var(--color-bg-base);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius);
   padding: var(--sp-2) var(--sp-3);
-  min-height: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 var(--sp-4);
-  align-items: flex-start;
+  min-height: 80px;
 }
 .dd-date {
-  width: 100%;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--color-text-interactive);
-  margin-bottom: var(--sp-2);
+  margin-bottom: var(--sp-1);
   padding-bottom: var(--sp-1);
   border-bottom: 1px solid var(--color-border-default);
 }
@@ -498,15 +498,13 @@ canvas {
   padding: 3px 0;
   font-size: 0.75rem;
   border-bottom: 1px solid rgba(43,101,155,0.2);
-  min-width: 160px;
-  flex: 1 1 160px;
 }
 .dd-row:last-child { border-bottom: none; }
 .dd-key { color: var(--color-text-placeholder); flex-shrink: 0; }
 .dd-val { color: var(--color-text-primary); font-weight: 500; text-align: right; }
 .dd-placeholder {
   color: var(--color-text-placeholder);
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   line-height: 1.5;
   padding: var(--sp-1) 0;
 }
@@ -982,15 +980,15 @@ footer {
 <nav class="tab-nav">
   <button class="tab-btn active" id="tab-solar" onclick="switchTab('solar')" style="--tab-color:var(--s-bmnt)">
     <span class="tab-icon">📡</span>
-    <span class="tab-label">Solar Analysis</span>
+    <span class="tab-label">Solar Data</span>
   </button>
   <button class="tab-btn" id="tab-photo" onclick="switchTab('photo')" style="--tab-color:var(--p-golden)">
     <span class="tab-icon">📷</span>
-    <span class="tab-label">Photography Planner</span>
+    <span class="tab-label">Photography Analysis</span>
   </button>
   <button class="tab-btn" id="tab-moon" onclick="switchTab('moon')" style="--tab-color:#a78bfa">
     <span class="tab-icon">🌙</span>
-    <span class="tab-label">Moon Data</span>
+    <span class="tab-label">Lunar Data</span>
   </button>
 </nav>
 
@@ -998,32 +996,31 @@ footer {
 <div style="padding: 14px 14px 0">
   <div class="picker-section" id="pickerSection">
 
-    <!-- Calendar -->
+    <!-- Left column: calendar + day summary stacked -->
     <div class="cal-col">
-      <div class="picker-col-label">Select Date</div>
-      <div class="cal-nav">
-        <button id="calPrev" aria-label="Previous month">◀</button>
-        <span class="cal-month-label" id="calLabel"></span>
-        <button id="calNext" aria-label="Next month">▶</button>
-        <input id="yearInput" type="number" min="2000" max="2099" step="1"
-          title="Year — press Enter to apply"
-          style="width:58px;background:var(--surf3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font);font-size:0.68rem;padding:3px 6px;text-align:center;outline:none;-webkit-appearance:none;">
-        <button id="calToday" aria-label="Jump to today" onclick="jumpToToday()" title="Jump to today" style="font-size:0.55rem;letter-spacing:0.08em;padding:3px 8px;font-family:var(--font-hd)">TODAY</button>
+      <div>
+        <div class="picker-col-label">Select Date</div>
+        <div class="cal-nav">
+          <button id="calPrev" aria-label="Previous month">◀</button>
+          <span class="cal-month-label" id="calLabel"></span>
+          <button id="calNext" aria-label="Next month">▶</button>
+          <button id="calToday" aria-label="Jump to today" onclick="jumpToToday()" title="Jump to today" style="font-size:0.55rem;letter-spacing:0.08em;padding:3px 8px;font-family:var(--font-hd)">TODAY</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
       </div>
-      <div class="cal-grid" id="calGrid"></div>
-    </div>
 
-    <!-- Day detail -->
-    <div class="day-detail">
-      <div class="picker-col-label" id="detailLabel">Day Summary</div>
-      <div class="day-detail-inner" id="dayDetailContent">
-        <div class="dd-placeholder">← Select a date or tap any chart<br>to see details for that day.</div>
-      </div>
-      <!-- Photo quality badge (only visible on photo tab) -->
-      <div class="quality-badge" id="qualBadge" style="display:none">
-        <div class="qb-label">Photo Quality Score</div>
-        <div class="qb-score" id="qbScore">—</div>
-        <div class="qb-sub" id="qbSub">Select a date</div>
+      <!-- Day detail — directly below calendar in same column -->
+      <div class="day-detail">
+        <div class="picker-col-label" id="detailLabel">Day Summary</div>
+        <div class="day-detail-inner" id="dayDetailContent">
+          <div class="dd-placeholder">Select a date or tap any chart to see details for that day.</div>
+        </div>
+        <!-- Photo quality badge (only visible on photo tab) -->
+        <div class="quality-badge" id="qualBadge" style="display:none">
+          <div class="qb-label">Photo Quality Score</div>
+          <div class="qb-score" id="qbScore">—</div>
+          <div class="qb-sub" id="qbSub">Select a date</div>
+        </div>
       </div>
     </div>
 
@@ -1182,8 +1179,8 @@ footer {
 
 <script>
 'use strict';
-const BUILD_VERSION = 'solar-planner-20260228_183855';
-const BUILD_DATE = '2026-02-28 18:38 UTC';
+const BUILD_VERSION = 'solar-planner-20260228_185518';
+const BUILD_DATE = '2026-02-28 18:55 UTC';
 // ══════════════════════════════════════════════════════════════
 //  LOCATION STATE  — mutable, drives all calculations
 // ══════════════════════════════════════════════════════════════
@@ -1458,7 +1455,7 @@ const _todayYear = _today.getFullYear();
 let selectedDoy = (_todayYear === LOC.year)
   ? Math.round((new Date(Date.UTC(_todayYear, _today.getMonth(), _today.getDate())) - new Date(Date.UTC(_todayYear,0,1))) / 86400000)
   : 0;
-let calMonth = data[selectedDoy].date.getUTCMonth();
+// calOffset declared inside buildCalendar section below
 let activeTab   = 'solar';
 
 // ══════════════════════════════════════════════════════════════
@@ -1529,52 +1526,81 @@ function buildStats() {
 // ══════════════════════════════════════════════════════════════
 //  CALENDAR
 // ══════════════════════════════════════════════════════════════
+// calOffset = months elapsed since Jan 2000 (base reference)
+// This lets prev/next scroll freely across year boundaries.
+let calOffset = (LOC.year - 2000) * 12 + (data[selectedDoy]?.date.getUTCMonth() ?? 0);
+
+function calOffsetToYearMonth(off) {
+  const year  = 2000 + Math.floor(off / 12);
+  const month = ((off % 12) + 12) % 12;
+  return { year, month };
+}
+
 function buildCalendar() {
   const grid = document.getElementById('calGrid');
-  document.getElementById('calLabel').textContent = MFULL[calMonth]+' '+LOC.year;
+  const { year, month } = calOffsetToYearMonth(calOffset);
+  document.getElementById('calLabel').textContent = MFULL[month] + ' ' + year;
   grid.innerHTML = '';
   ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => {
     const el=document.createElement('div'); el.className='cal-hdr'; el.textContent=d; grid.appendChild(el);
   });
-  const first = new Date(Date.UTC(LOC.year,calMonth,1)).getUTCDay();
-  const days  = new Date(Date.UTC(LOC.year,calMonth+1,0)).getUTCDate();
-  for (let i=0;i<first;i++) {
+  const first = new Date(Date.UTC(year, month, 1)).getUTCDay();
+  const days  = new Date(Date.UTC(year, month+1, 0)).getUTCDate();
+  for (let i=0; i<first; i++) {
     const el=document.createElement('div'); el.className='cal-cell empty'; grid.appendChild(el);
   }
-  for (let day=1;day<=days;day++) {
-    const doy = Math.round((new Date(Date.UTC(LOC.year,calMonth,day))-new Date(Date.UTC(LOC.year,0,1)))/86400000);
-    const d   = data[doy];
-    const el  = document.createElement('div');
+  for (let day=1; day<=days; day++) {
+    const el = document.createElement('div');
     el.className = 'cal-cell';
     el.textContent = day;
-    if (d.polarDay)   el.classList.add('polar-day');
-    if (d.polarNight) el.classList.add('polar-night');
-    if (d.score>=70)  el.classList.add('gold-day');
-    if (selectedDoy===doy) el.classList.add('selected');
-    el.addEventListener('click', ()=>{ selectDate(doy); });
+
+    if (year === LOC.year) {
+      // Current data year — select directly
+      const doy = Math.round((new Date(Date.UTC(year, month, day)) - new Date(Date.UTC(year,0,1))) / 86400000);
+      const d   = data[Math.min(doy, data.length-1)];
+      if (d.polarDay)   el.classList.add('polar-day');
+      if (d.polarNight) el.classList.add('polar-night');
+      if (d.score>=70)  el.classList.add('gold-day');
+      if (selectedDoy===doy) el.classList.add('selected');
+      el.addEventListener('click', () => selectDate(doy));
+    } else {
+      // Different year — rebuild data for that year then select
+      el.addEventListener('click', () => {
+        const targetDoy = Math.round(
+          (new Date(Date.UTC(year, month, day)) - new Date(Date.UTC(year,0,1))) / 86400000
+        );
+        fullRebuild({ ...LOC, year, _targetDoy: targetDoy });
+      });
+    }
     grid.appendChild(el);
   }
 }
-document.getElementById('calPrev').addEventListener('click', ()=>{ calMonth=(calMonth+11)%12; buildCalendar(); });
-document.getElementById('calNext').addEventListener('click', ()=>{ calMonth=(calMonth+1)%12; buildCalendar(); });
+
+document.getElementById('calPrev').addEventListener('click', ()=>{ calOffset--; buildCalendar(); });
+document.getElementById('calNext').addEventListener('click', ()=>{ calOffset++; buildCalendar(); });
 
 function jumpToToday() {
   const today = new Date();
-  if (today.getFullYear() !== LOC.year) {
-    setStatus(`Today is ${today.getFullYear()} — current view is ${LOC.year}. Change the year to jump to today.`, 'err');
-    return;
+  const ty = today.getFullYear(), tm = today.getMonth(), td = today.getDate();
+  calOffset = (ty - 2000) * 12 + tm;
+  if (ty === LOC.year) {
+    const doy = Math.round((new Date(Date.UTC(ty, tm, td)) - new Date(Date.UTC(ty, 0, 1))) / 86400000);
+    selectDate(Math.min(doy, data.length - 1));
+  } else {
+    fullRebuild({ ...LOC, year: ty,
+      _targetDoy: Math.round((new Date(Date.UTC(ty, tm, td)) - new Date(Date.UTC(ty, 0, 1))) / 86400000)
+    });
   }
-  const doy = Math.round((new Date(Date.UTC(LOC.year, today.getMonth(), today.getDate())) - new Date(Date.UTC(LOC.year, 0, 1))) / 86400000);
-  selectDate(Math.min(doy, data.length - 1));
 }
 
 function selectDate(doy) {
   selectedDoy = doy;
-  calMonth = data[doy].date.getUTCMonth();
+  const d = data[doy];
+  calOffset = (d.date.getUTCFullYear() - 2000) * 12 + d.date.getUTCMonth();
   buildCalendar();
   updateDayDetail(doy);
   if (activeTab === 'moon') updateMoonDayDetail(doy);
-  updateTzDisplay(data[doy].date);
+  updateTzDisplay(d.date);
   updateCoordsBar();
   renderAllCharts();
 }
@@ -2290,7 +2316,6 @@ function renderAllCharts() {
 //  TOOLTIP & INTERACTION (touch + mouse)
 // ══════════════════════════════════════════════════════════════
 const ttEl = document.getElementById('tooltip');
-let touchTooltipTimer = null;
 
 function getTooltipHTML(doy) {
   const d=data[doy], mon=MONTHS[d.date.getUTCMonth()], tz=tzLabel(d.off);
@@ -2325,45 +2350,22 @@ function showTooltip(doy, clientX, clientY) {
 }
 
 function bindChart(canvasId) {
-  const canvas=document.getElementById(canvasId);
+  const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
-  const getDoy=clientX=>{
-    const rect=canvas.getBoundingClientRect();
-    return Math.min(364,Math.max(0,Math.round((clientX-rect.left)/rect.width*364)));
+  const getDoy = clientX => {
+    const rect = canvas.getBoundingClientRect();
+    return Math.min(data.length-1, Math.max(0, Math.round((clientX - rect.left) / rect.width * (data.length-1))));
   };
 
-  // Mouse
-  canvas.addEventListener('mousemove', e=>{
+  // Desktop: hover shows tooltip only — no click interaction
+  canvas.addEventListener('mousemove', e => {
     showTooltip(getDoy(e.clientX), e.clientX, e.clientY);
   });
-  canvas.addEventListener('mouseleave', ()=>{ ttEl.style.display='none'; });
-  canvas.addEventListener('click', e=>{
-    const doy=getDoy(e.clientX);
-    selectDate(doy);
-  });
+  canvas.addEventListener('mouseleave', () => { ttEl.style.display = 'none'; });
 
-  // Touch — tap to select, long-press for tooltip
-  canvas.addEventListener('touchstart', e=>{
-    e.preventDefault();
-    const t=e.touches[0];
-    const doy=getDoy(t.clientX);
-    touchTooltipTimer=setTimeout(()=>{
-      showTooltip(doy,t.clientX,t.clientY);
-    },400);
-  }, {passive:false});
-  canvas.addEventListener('touchend', e=>{
-    e.preventDefault();
-    if (touchTooltipTimer) { clearTimeout(touchTooltipTimer); touchTooltipTimer=null; }
-    const t=e.changedTouches[0];
-    const doy=getDoy(t.clientX);
-    selectDate(doy);
-    ttEl.style.display='none';
-  }, {passive:false});
-  canvas.addEventListener('touchmove', e=>{
-    if (touchTooltipTimer) { clearTimeout(touchTooltipTimer); touchTooltipTimer=null; }
-    ttEl.style.display='none';
-  }, {passive:true});
+  // Touch: allow native scroll — no tooltip, no date selection
+  // (date selection is via the calendar only on touch devices)
 }
 
 
@@ -3108,8 +3110,6 @@ function updateCoordsBar() {
 function syncInputsToLOC() {
   document.getElementById('latInput').value  = LOC.lat.toFixed(4);
   document.getElementById('lonInput').value  = LOC.lon.toFixed(4);
-  document.getElementById('yearInput').value = LOC.year;
-  // Update the tz display for current selected date
   const refDate = selectedDoy != null && data[selectedDoy]
     ? data[selectedDoy].date
     : new Date(Date.UTC(LOC.year, 0, 1));
@@ -3118,7 +3118,10 @@ function syncInputsToLOC() {
 
 // Full rebuild — recompute data, refresh all UI
 function fullRebuild(newLOC) {
-  Object.assign(LOC, newLOC);
+  const targetDoy = newLOC._targetDoy ?? null;
+  const cleanLOC  = { ...newLOC };
+  delete cleanLOC._targetDoy;
+  Object.assign(LOC, cleanLOC);
   const overlay = document.getElementById('rebuildOverlay');
   overlay.classList.add('show');
   setTimeout(() => {
@@ -3126,12 +3129,16 @@ function fullRebuild(newLOC) {
       data = buildData();
       moonData = buildMoonData();
       rebuildMonthStarts();
-      // Reset to today if year matches, otherwise Jan 1
-      const td = new Date();
-      selectedDoy = (td.getFullYear() === LOC.year)
-        ? Math.round((new Date(Date.UTC(LOC.year, td.getMonth(), td.getDate())) - new Date(Date.UTC(LOC.year,0,1))) / 86400000)
-        : 0;
-      calMonth = data[selectedDoy].date.getUTCMonth();
+      // Use explicit target doy if provided, else default to today / Jan 1
+      if (targetDoy != null) {
+        selectedDoy = Math.min(targetDoy, data.length - 1);
+      } else {
+        const td = new Date();
+        selectedDoy = (td.getFullYear() === LOC.year)
+          ? Math.round((new Date(Date.UTC(LOC.year, td.getMonth(), td.getDate())) - new Date(Date.UTC(LOC.year,0,1))) / 86400000)
+          : 0;
+      }
+      calOffset = (LOC.year - 2000) * 12 + data[selectedDoy].date.getUTCMonth();
       syncInputsToLOC();
       updateCoordsBar();
       buildStats();
@@ -3150,14 +3157,12 @@ function fullRebuild(newLOC) {
 async function applyLocation() {
   const lat  = parseFloat(document.getElementById('latInput').value);
   const lon  = parseFloat(document.getElementById('lonInput').value);
-  const year = parseInt(document.getElementById('yearInput').value, 10);
+  const year = LOC.year; // year stays as current; not user-editable
 
   if (isNaN(lat) || lat < -90 || lat > 90)
     return setStatus('Latitude must be between −90 and 90', 'err');
   if (isNaN(lon) || lon < -180 || lon > 180)
     return setStatus('Longitude must be between −180 and 180', 'err');
-  if (isNaN(year) || year < 2000 || year > 2099)
-    return setStatus('Year must be between 2000 and 2099', 'err');
 
   setStatus('Looking up timezone…', 'busy');
   document.getElementById('applyBtn').disabled = true;
@@ -3379,10 +3384,7 @@ cityInput.addEventListener('blur', () => {
   setTimeout(() => { document.getElementById('citySuggestions').style.display = 'none'; }, 150);
 });
 
-// Year input: Enter to apply
-document.getElementById('yearInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') applyLocation();
-});
+// City input: blur closes suggestions
 
 
 // ══════════════════════════════════════════════════════════════
