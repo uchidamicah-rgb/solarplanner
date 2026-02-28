@@ -7,203 +7,279 @@
 
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#05080f">
+<meta name="theme-color" content="#101923">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Solar Planner">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
-/* ══════════════════════════════════════
-   DESIGN TOKENS
-══════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   ASTRO UXDS v7 — DESIGN TOKENS (from @astrouxds/tokens)
+   Source: https://www.astrouxds.com/design-tokens/reference/
+══════════════════════════════════════════════════════ */
 :root {
-  --bg:       #05080f;
-  --surface:  #0a0f1e;
-  --surf2:    #0f1628;
-  --surf3:    #131d34;
-  --border:   #1b2c47;
-  --text:     #b8d0ee;
-  --muted:    #3d5870;
-  --font:     'IBM Plex Mono', monospace;
-  --font-hd:  'Orbitron', sans-serif;
+  /* ── Backgrounds ── */
+  --color-bg-base:         #101923;  /* darkblue-950 */
+  --color-bg-header:       #172635;  /* darkblue-900 */
+  --color-bg-surface:      #1b2d3e;  /* darkblue-800 */
+  --color-bg-hover:        #1c3851;  /* darkblue-700 */
+  --color-bg-selected:     #1c3f5e;  /* darkblue-700 interactive */
 
-  /* Solar tab palette */
-  --s-bmnt:   #60c5ff;
-  --s-sr:     #f5e642;
-  --s-noon:   #42e8c8;
-  --s-eent:   #ff7e42;
-  --s-elev:   #c084fc;
-  --s-gain:   #42e8c8;
-  --s-loss:   #ff7e42;
-  --s-astro:  #9b6fff;
-  --s-sel:    #ff4fc8;
+  /* ── Borders ── */
+  --color-border-default:  #2b659b;  /* brightblue-700 */
+  --color-border-hover:    #92cbff;  /* brightblue-400 */
+  --color-border-focus:    #da9ce7;  /* pink-200 */
 
-  /* Photo tab palette */
-  --p-golden: #f59e0b;
-  --p-warm:   #fb923c;
-  --p-blue:   #60a5fa;
-  --p-astro:  #4f46e5;
-  --p-score:  #34d399;
-  --p-sel:    #f43f5e;
+  /* ── Text ── */
+  --color-text-primary:    #ffffff;
+  --color-text-secondary:  #d4d8dd;  /* grey-300 */
+  --color-text-placeholder:#a4abb6;  /* grey-500 */
+  --color-text-interactive:#4dacff;  /* brightblue-500 */
+  --color-text-int-hover:  #92cbff;  /* brightblue-400 */
+  --color-text-inverse:    #080c11;
 
-  /* Tab accent (changes per tab) */
-  --tab-accent: var(--s-bmnt);
+  /* ── Interactive ── */
+  --color-interactive:     #4dacff;  /* brightblue-500 */
+  --color-interactive-hover:#92cbff; /* brightblue-400 */
+  --color-interactive-muted:#2b659b; /* brightblue-700 */
+
+  /* ── Status ── */
+  --color-status-normal:   #56f000;  /* green-500 */
+  --color-status-caution:  #fce83a;  /* yellow-500 */
+  --color-status-serious:  #ffb302;  /* orange-500 */
+  --color-status-critical: #ff3838;  /* red-500 */
+  --color-status-standby:  #2dccff;  /* cyan-600 */
+  --color-status-off:      #a4abb6;  /* grey-500 */
+
+  /* ── Data Visualization (Astro DV palette) ── */
+  --dv-1: #00c7cb;  /* teal-500 */
+  --dv-2: #938bdb;  /* purple-400 */
+  --dv-3: #4dacff;  /* brightblue-500 */
+  --dv-4: #70dde0;  /* teal-300 */
+  --dv-5: #c9c5ed;  /* purple-200 */
+  --dv-6: #92cbff;  /* brightblue-400 */
+  --dv-7: #a1e9eb;  /* teal-200 */
+  --dv-8: #b7dcff;  /* brightblue-300 */
+
+  /* ── Chart accent colors (mapped to Astro palette) ── */
+  --c-solar:   #4dacff;   /* brightblue-500 — solar curves */
+  --c-solar-h: #92cbff;   /* brightblue-400 — solar hover */
+  --c-sun:     #fce83a;   /* yellow-500 — sun dot/peak */
+  --c-gold:    #ffb302;   /* orange-500 — golden hour */
+  --c-dawn:    #2dccff;   /* cyan-600 — twilight / BMNT */
+  --c-moon:    #938bdb;   /* purple-400 — lunar */
+  --c-moon-h:  #c9c5ed;   /* purple-200 — lunar hover */
+  --c-gain:    #56f000;   /* green-500 — daylight gain */
+  --c-loss:    #ff3838;   /* red-500 — daylight loss */
+  --c-sel:     #4dacff;   /* brightblue-500 — selected date */
+  --c-noon:    #00c7cb;   /* teal-500 — solar noon */
+
+  /* ── Tab accent (set dynamically per tab) ── */
+  --tab-accent: var(--color-interactive);
+
+  /* ── Typography (Astro: Roboto, no tracking, sentence case) ── */
+  --font:    'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-hd: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* ── Spacing (4px base increments) ── */
+  --sp-1: 0.25rem;   /* 4px */
+  --sp-2: 0.5rem;    /* 8px */
+  --sp-3: 0.75rem;   /* 12px */
+  --sp-4: 1rem;      /* 16px */
+  --sp-6: 1.5rem;    /* 24px */
+
+  /* ── Border radius ── */
+  --radius: 3px;  /* Astro base radius */
+
+  /* ── Shadows ── */
+  --shadow-overlay: 0px 4px 4px 1px rgba(0,0,0,0.45);
+
+  /* ── Opacity ── */
+  --opacity-disabled: 0.4;
+
+  /* Legacy aliases (keep JS references working) */
+  --bg:      var(--color-bg-base);
+  --surface: var(--color-bg-surface);
+  --surf2:   var(--color-bg-header);
+  --surf3:   var(--color-bg-hover);
+  --border:  var(--color-border-default);
+  --text:    var(--color-text-secondary);
+  --muted:   var(--color-text-placeholder);
+  --s-bmnt:  var(--c-dawn);
+  --s-sr:    var(--c-sun);
+  --s-noon:  var(--c-noon);
+  --s-eent:  var(--color-status-serious);
+  --s-elev:  var(--dv-2);
+  --s-gain:  var(--c-gain);
+  --s-loss:  var(--c-loss);
+  --s-astro: var(--dv-2);
+  --s-sel:   var(--c-sel);
+  --p-golden:var(--color-status-serious);
+  --p-blue:  var(--c-solar-h);
+  --p-score: var(--color-status-normal);
+  --p-sel:   var(--color-status-critical);
 }
 
 /* ══════════════════════════════════════
-   RESET & BASE
+   RESET & BASE (Astro: 16px base, Roboto, sentence case)
 ══════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; font-size: 16px; }
 
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: var(--color-bg-base);
+  color: var(--color-text-secondary);
   font-family: var(--font);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 0.875rem;        /* body-2: 14px */
+  font-weight: 400;
+  line-height: 1.429;         /* 20/14 */
+  letter-spacing: 0.005em;
   min-height: 100vh;
   overflow-x: hidden;
-  background-image:
-    radial-gradient(ellipse 70% 40% at 20% 0%, rgba(96,197,255,0.05) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 30% at 80% 100%, rgba(192,132,252,0.04) 0%, transparent 55%);
 }
 
 /* ══════════════════════════════════════
-   HEADER
+   GLOBAL STATUS BAR (Astro pattern)
 ══════════════════════════════════════ */
 .app-header {
-  text-align: center;
-  padding: 20px 16px 0;
-}
-.app-header h1 {
-  font-family: var(--font-hd);
-  font-size: clamp(0.9rem, 2.5vw, 1.6rem);
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.app-header .sub {
-  font-size: clamp(0.55rem, 1.5vw, 0.65rem);
-  color: var(--muted);
-  letter-spacing: 0.15em;
-  margin-top: 4px;
-}
-.app-header .coords {
-  display: inline-block;
-  margin-top: 8px;
-  background: var(--surf2);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 3px 12px;
-  font-size: clamp(0.55rem, 1.4vw, 0.64rem);
-  color: var(--tab-accent);
-  letter-spacing: 0.07em;
-  transition: color 0.3s;
-}
-
-/* ══════════════════════════════════════
-   TAB NAVIGATION
-══════════════════════════════════════ */
-.tab-nav {
-  display: flex;
-  gap: 0;
-  margin: 16px 16px 0;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--surf2);
-}
-.tab-btn {
-  flex: 1;
-  background: none;
-  border: none;
-  border-right: 1px solid var(--border);
-  color: var(--muted);
-  font-family: var(--font-hd);
-  font-size: clamp(0.5rem, 1.6vw, 0.62rem);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 12px 8px;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  background: var(--color-bg-header);
+  border-bottom: 1px solid var(--color-border-default);
+  padding: var(--sp-3) var(--sp-4);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--sp-1);
+}
+.app-header h1 {
+  font-family: var(--font);
+  font-size: 1.25rem;          /* heading-4 */
+  font-weight: 300;
+  letter-spacing: 0.0015em;
+  color: var(--color-text-primary);
+  text-transform: none;        /* Astro: sentence case */
+}
+.app-header .sub {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--color-text-placeholder);
+  letter-spacing: 0.005em;
+}
+.app-header .coords {
+  display: inline-block;
+  margin-top: var(--sp-1);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius);
+  padding: 2px var(--sp-3);
+  font-size: 0.75rem;          /* body-3 */
+  color: var(--color-text-interactive);
+  letter-spacing: 0.005em;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+/* ══════════════════════════════════════
+   TABS (Astro Tab component pattern)
+   Selected: white text, 4px bottom border in interactive color
+   Default: interactive color text
+   Hover: hover interactive color
+══════════════════════════════════════ */
+.tab-nav {
+  display: flex;
+  background: var(--color-bg-header);
+  border-bottom: 1px solid var(--color-border-default);
+  margin: 0 var(--sp-4);
+  margin-top: var(--sp-2);
+}
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 4px solid transparent;
+  color: var(--color-text-interactive);    /* brightblue-500 default */
+  font-family: var(--font);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  text-transform: none;                    /* sentence case */
+  padding: var(--sp-3) var(--sp-3);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
   position: relative;
-  overflow: hidden;
 }
-.tab-btn:last-child { border-right: none; }
-.tab-btn .tab-icon { font-size: 1.1rem; line-height: 1; }
-.tab-btn .tab-label { line-height: 1.2; }
-.tab-btn::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--tab-color, var(--s-bmnt));
-  transform: scaleX(0);
-  transition: transform 0.2s;
+.tab-btn .tab-icon { font-size: 1rem; line-height: 1; }
+.tab-btn .tab-label { line-height: 1.25; }
+.tab-btn:hover {
+  color: var(--color-text-int-hover);      /* brightblue-400 */
+  background: var(--color-bg-hover);
 }
-.tab-btn:hover { background: var(--surf3); color: var(--text); }
 .tab-btn.active {
-  background: var(--surf3);
-  color: #fff;
+  color: var(--color-text-primary);        /* white */
+  border-bottom-color: var(--tab-accent);  /* 4px bottom per Astro spec */
+  background: transparent;
 }
-.tab-btn.active::after { transform: scaleX(1); }
+.tab-btn:focus-visible {
+  outline: 1px solid var(--color-border-focus);
+  outline-offset: -1px;
+}
 
 /* ══════════════════════════════════════
    TAB CONTENT
 ══════════════════════════════════════ */
-.tab-content { display: none; padding: 14px 14px 48px; }
+.tab-content { display: none; padding: var(--sp-3) var(--sp-4) 3rem; }
 .tab-content.active { display: block; }
 
 /* ══════════════════════════════════════
-   STATS ROW (shared)
+   STAT CARDS (Astro Card pattern)
 ══════════════════════════════════════ */
 .stats-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
 }
 .stat-card {
-  background: var(--surf2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 10px 12px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius);
+  padding: var(--sp-2) var(--sp-3);
   text-align: center;
   position: relative;
   overflow: hidden;
+  transition: background 0.15s;
 }
 .stat-card::after {
   content: '';
   position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 2px;
-  background: var(--accent, var(--s-bmnt));
+  background: var(--accent, var(--color-interactive));
 }
+.stat-card:hover { background: var(--color-bg-hover); }
 .stat-val {
-  font-family: var(--font-hd);
-  font-size: clamp(0.78rem, 2vw, 0.92rem);
+  font-size: 1rem;             /* body-1 */
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text-primary);
   margin-bottom: 2px;
+  letter-spacing: 0.005em;
 }
 .stat-lbl {
-  font-size: clamp(0.5rem, 1.3vw, 0.56rem);
-  color: var(--muted);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 0.75rem;          /* body-3 */
+  font-weight: 500;
+  color: var(--color-text-placeholder);
+  letter-spacing: 0.005em;
+  text-transform: none;
 }
 .stat-sub {
-  font-size: clamp(0.5rem, 1.3vw, 0.56rem);
-  color: var(--accent, var(--s-bmnt));
+  font-size: 0.75rem;
+  color: var(--accent, var(--color-interactive));
   margin-top: 2px;
 }
 
@@ -211,31 +287,21 @@ body {
    CHART PANELS
 ══════════════════════════════════════ */
 .chart-wrap {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 16px 12px 12px;
-  margin-bottom: 14px;
-  position: relative;
-  overflow: hidden;
-}
-.chart-wrap::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(160deg, rgba(96,197,255,0.02) 0%, transparent 35%);
-  pointer-events: none;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+  margin-bottom: var(--sp-3);
 }
 .chart-title {
-  font-family: var(--font-hd);
-  font-size: clamp(0.5rem, 1.5vw, 0.58rem);
-  letter-spacing: 0.18em;
-  color: var(--muted);
-  text-transform: uppercase;
-  margin-bottom: 10px;
-  padding-left: 4px;
-  padding-bottom: 7px;
-  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;          /* body-3 bold */
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  color: var(--color-text-secondary);
+  text-transform: none;
+  margin-bottom: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--color-border-default);
 }
 canvas {
   display: block;
@@ -250,77 +316,91 @@ canvas {
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px 14px;
-  margin-top: 10px;
+  gap: var(--sp-1) var(--sp-3);
+  margin-top: var(--sp-2);
   justify-content: center;
 }
 .li {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: clamp(0.52rem, 1.3vw, 0.59rem);
-  color: var(--muted);
+  gap: var(--sp-1);
+  font-size: 0.75rem;
+  color: var(--color-text-placeholder);
+  letter-spacing: 0.005em;
 }
-.li-sq  { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-.li-ln  { width: 15px; height: 2px; flex-shrink: 0; }
+.li-sq   { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.li-ln   { width: 15px; height: 2px; flex-shrink: 0; }
 .li-dash { width: 15px; height: 0; border-top: 2px dashed; flex-shrink: 0; }
 .li-fill { width: 12px; height: 8px; border-radius: 2px; flex-shrink: 0; opacity: 0.65; }
 
 /* ══════════════════════════════════════
-   DATE PICKER SECTION (shared)
+   DATE PICKER PANEL
 ══════════════════════════════════════ */
 .picker-section {
-  background: var(--surf2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px;
-  margin-bottom: 14px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-3);
   display: grid;
   grid-template-columns: auto 1fr 2fr;
-  gap: 16px;
+  gap: var(--sp-4);
   align-items: start;
 }
 @media (max-width: 700px) {
-  .picker-section {
-    grid-template-columns: 1fr;
-  }
+  .picker-section { grid-template-columns: 1fr; }
 }
 
 .picker-col-label {
-  font-family: var(--font-hd);
-  font-size: 0.54rem;
-  letter-spacing: 0.18em;
-  color: var(--muted);
-  text-transform: uppercase;
-  margin-bottom: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  color: var(--color-text-placeholder);
+  margin-bottom: var(--sp-2);
+  text-transform: none;
 }
 
-/* Calendar */
+/* ── Calendar ── */
 .cal-nav {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
+  gap: var(--sp-1);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-2);
 }
 .cal-nav button {
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-interactive);
   font-family: var(--font);
-  font-size: 0.7rem;
-  padding: 4px 10px;
-  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--radius);
   cursor: pointer;
-  transition: 0.15s;
-  min-width: 36px;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  min-width: 32px;
   min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.cal-nav button:hover { border-color: var(--tab-accent); color: var(--tab-accent); }
+.cal-nav button:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text-int-hover);
+  background: var(--color-bg-hover);
+}
+.cal-nav button:focus-visible {
+  outline: 1px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
 .cal-month-label {
-  font-family: var(--font-hd);
-  font-size: clamp(0.58rem, 1.6vw, 0.66rem);
-  letter-spacing: 0.08em;
-  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  letter-spacing: 0.005em;
+  flex: 1;
+  text-align: center;
 }
 .cal-grid {
   display: grid;
@@ -328,77 +408,86 @@ canvas {
   gap: 2px;
 }
 .cal-hdr {
-  font-size: clamp(0.48rem, 1.2vw, 0.54rem);
-  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-placeholder);
   text-align: center;
   padding: 2px 0;
+  letter-spacing: 0.005em;
 }
 .cal-cell {
   height: clamp(26px, 4vw, 30px);
-  border-radius: 3px;
+  border-radius: var(--radius);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(0.54rem, 1.4vw, 0.62rem);
+  font-size: 0.75rem;
+  font-weight: 400;
   cursor: pointer;
   border: 1px solid transparent;
-  color: var(--text);
-  transition: 0.12s;
+  color: var(--color-text-secondary);
+  transition: background 0.1s, border-color 0.1s;
   position: relative;
   user-select: none;
 }
-.cal-cell:hover { background: var(--surf3); border-color: var(--border); }
-.cal-cell.selected { background: var(--s-sel) !important; color: #fff !important; border-color: var(--s-sel) !important; font-weight: 700; }
-.cal-cell.polar-day { color: var(--s-sr); }
-.cal-cell.polar-night { color: var(--muted); }
+.cal-cell:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-default);
+}
+.cal-cell.selected {
+  background: var(--color-interactive-muted) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-interactive) !important;
+  font-weight: 700;
+}
+.cal-cell.polar-day  { color: var(--c-sun); }
+.cal-cell.polar-night { color: var(--color-text-placeholder); }
 .cal-cell.gold-day::after {
   content: '';
   position: absolute;
   bottom: 2px; left: 50%; transform: translateX(-50%);
   width: 3px; height: 3px;
   border-radius: 50%;
-  background: var(--p-golden);
+  background: var(--color-status-serious);
 }
 .cal-cell.empty { cursor: default; pointer-events: none; }
 
-/* Day detail card */
-.day-detail {
-  min-width: 0;
-}
+/* ── Day detail card ── */
+.day-detail { min-width: 0; }
 .day-detail-inner {
-  background: var(--surf3);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 12px 14px;
+  background: var(--color-bg-base);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
   min-height: 140px;
 }
 .dd-date {
-  font-family: var(--font-hd);
-  font-size: clamp(0.7rem, 2vw, 0.82rem);
-  color: var(--s-sel);
-  margin-bottom: 8px;
-  padding-bottom: 7px;
-  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-interactive);
+  margin-bottom: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--color-border-default);
 }
 .dd-row {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
-  padding: 2px 0;
-  font-size: clamp(0.56rem, 1.5vw, 0.64rem);
-  border-bottom: 1px solid rgba(27,44,71,0.35);
+  gap: var(--sp-2);
+  padding: 3px 0;
+  font-size: 0.75rem;
+  border-bottom: 1px solid rgba(43,101,155,0.25);
 }
 .dd-row:last-child { border-bottom: none; }
-.dd-key { color: var(--muted); flex-shrink: 0; }
-.dd-val { color: #fff; font-weight: 600; text-align: right; }
+.dd-key { color: var(--color-text-placeholder); flex-shrink: 0; }
+.dd-val { color: var(--color-text-primary); font-weight: 500; text-align: right; }
 .dd-placeholder {
-  color: var(--muted);
-  font-size: 0.62rem;
-  line-height: 1.7;
-  padding-top: 6px;
+  color: var(--color-text-placeholder);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  padding-top: var(--sp-2);
 }
 
-/* Sun/Moon altitude plot panel */
+/* ── Sun/Moon altitude plot ── */
 .arc-col {
   display: flex;
   flex-direction: column;
@@ -408,138 +497,131 @@ canvas {
 }
 #sharedArcCanvas { display: block; width: 100%; }
 
-/* Quality badge */
+/* ── Quality badge ── */
 .quality-badge {
   text-align: center;
-  padding: 10px 0 4px;
-  border-top: 1px solid var(--border);
-  margin-top: 8px;
+  padding: var(--sp-2) 0 var(--sp-1);
+  border-top: 1px solid var(--color-border-default);
+  margin-top: var(--sp-2);
 }
 .qb-label {
-  font-size: clamp(0.48rem, 1.2vw, 0.54rem);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-placeholder);
   margin-bottom: 2px;
+  letter-spacing: 0.005em;
 }
 .qb-score {
-  font-family: var(--font-hd);
-  font-size: clamp(1.4rem, 4vw, 1.9rem);
+  font-size: clamp(1.25rem, 3.5vw, 1.75rem);
   font-weight: 700;
   line-height: 1.1;
 }
-.qb-sub { font-size: clamp(0.5rem, 1.3vw, 0.58rem); color: var(--muted); margin-top: 2px; }
+.qb-sub { font-size: 0.75rem; color: var(--color-text-placeholder); margin-top: 2px; }
 
-/* Photo windows */
+/* ── Shoot windows ── */
 .photo-windows {
-  background: var(--surf2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 14px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-3);
 }
 .photo-windows h4 {
-  font-family: var(--font-hd);
-  font-size: clamp(0.5rem, 1.5vw, 0.58rem);
-  letter-spacing: 0.18em;
-  color: var(--p-golden);
-  text-transform: uppercase;
-  margin-bottom: 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  color: var(--color-status-serious);
+  text-transform: none;
+  margin-bottom: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--color-border-default);
 }
 .pw {
   display: flex;
   align-items: flex-start;
-  gap: 9px;
-  padding: 7px 0;
-  border-bottom: 1px solid rgba(27,44,71,0.35);
-  font-size: clamp(0.55rem, 1.4vw, 0.62rem);
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid rgba(43,101,155,0.25);
+  font-size: 0.75rem;
 }
 .pw:last-child { border-bottom: none; }
-.pw-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
-.pw-time { color: #fff; font-weight: 600; min-width: 90px; }
-.pw-dur  { color: var(--muted); }
-.pw-label { font-weight: 600; margin-bottom: 1px; }
-.pw-desc { color: var(--text); line-height: 1.4; opacity: 0.8; }
+.pw-dot   { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.pw-time  { color: var(--color-text-primary); font-weight: 500; min-width: 90px; }
+.pw-dur   { color: var(--color-text-placeholder); }
+.pw-label { font-weight: 700; margin-bottom: 1px; }
+.pw-desc  { color: var(--color-text-secondary); line-height: 1.5; opacity: 0.9; }
 
 /* ══════════════════════════════════════
-   TOOLTIP
+   TOOLTIP (Astro: dark surface, 1px border)
 ══════════════════════════════════════ */
 #tooltip {
   position: fixed;
-  background: rgba(5,8,15,0.97);
-  border: 1px solid var(--border);
+  background: var(--color-bg-base);
+  border: 1px solid var(--color-border-default);
   border-left: 3px solid var(--tab-accent);
-  border-radius: 6px;
-  padding: 9px 13px;
+  border-radius: var(--radius);
+  padding: var(--sp-2) var(--sp-3);
   font-family: var(--font);
-  font-size: clamp(0.56rem, 1.4vw, 0.63rem);
-  color: var(--text);
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
   pointer-events: none;
   z-index: 500;
   display: none;
   min-width: 190px;
-  line-height: 1.85;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.8);
-  transition: border-color 0.2s;
+  line-height: 1.5;
+  box-shadow: var(--shadow-overlay);
 }
 .tt-hdr {
-  font-family: var(--font-hd);
-  font-size: 0.58rem;
-  letter-spacing: 0.1em;
+  font-size: 0.75rem;
+  font-weight: 700;
   color: var(--tab-accent);
-  margin-bottom: 5px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 4px;
+  margin-bottom: var(--sp-1);
+  border-bottom: 1px solid var(--color-border-default);
+  padding-bottom: var(--sp-1);
+  letter-spacing: 0.005em;
 }
-.tt-r  { display: flex; justify-content: space-between; gap: 12px; }
-.tt-k  { color: var(--muted); }
-.tt-v  { color: #fff; font-weight: 600; }
+.tt-r { display: flex; justify-content: space-between; gap: var(--sp-3); }
+.tt-k { color: var(--color-text-placeholder); }
+.tt-v { color: var(--color-text-primary); font-weight: 500; }
 
 /* ══════════════════════════════════════
    FOOTER
 ══════════════════════════════════════ */
 footer {
   text-align: center;
-  font-size: clamp(0.5rem, 1.3vw, 0.57rem);
-  color: var(--muted);
-  padding: 0 16px 32px;
-  letter-spacing: 0.06em;
-  line-height: 1.8;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-text-placeholder);
+  padding: 0 var(--sp-4) 2rem;
+  line-height: 1.75;
+  letter-spacing: 0.005em;
 }
 
 /* ══════════════════════════════════════
-   LOCATION PANEL — two-row structured grid
+   LOCATION PANEL (Input Field pattern)
 ══════════════════════════════════════ */
 .loc-panel {
-  margin: 10px 16px 0;
-  background: var(--surf2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px 14px 10px;
+  margin: var(--sp-2) var(--sp-4) 0;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
 }
-/* Row 1: city search full-width */
 .loc-row1 {
   display: flex;
-  gap: 8px;
+  gap: var(--sp-2);
   align-items: flex-end;
-  margin-bottom: 8px;
+  margin-bottom: var(--sp-2);
 }
-/* Row 2: coordinates + metadata + actions — always inline, no wrapping */
 .loc-row2 {
   display: grid;
   grid-template-columns: 1fr auto auto;
-  gap: 8px;
+  gap: var(--sp-2);
   align-items: flex-end;
 }
 @media (max-width: 600px) {
-  .loc-row2 {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
-  }
-  .loc-row2 .loc-tz   { grid-column: 1; }
-  .loc-row2 .loc-actions { grid-column: 1 / -1; display: flex; gap: 8px; }
+  .loc-row2 { grid-template-columns: 1fr; }
+  .loc-row2 .loc-actions { display: flex; gap: var(--sp-2); }
 }
 .loc-group {
   display: flex;
@@ -548,49 +630,47 @@ footer {
   min-width: 0;
 }
 .loc-label {
-  font-family: var(--font-hd);
-  font-size: 0.5rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  color: var(--color-text-placeholder);
   white-space: nowrap;
+  text-transform: none;
 }
 .loc-input {
-  background: var(--surf3);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text);
+  background: var(--color-bg-base);           /* Astro input background */
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius);
+  color: var(--color-text-primary);
   font-family: var(--font);
-  font-size: clamp(0.62rem, 1.6vw, 0.72rem);
-  padding: 7px 10px;
+  font-size: 0.875rem;
+  font-weight: 400;
+  padding: 6px var(--sp-2);
   width: 100%;
   transition: border-color 0.15s;
   outline: none;
   -webkit-appearance: none;
+  letter-spacing: 0.005em;
 }
-.loc-input:focus { border-color: var(--tab-accent); }
-.loc-input::placeholder { color: var(--muted); }
-
-/* Coordinate pair — always locked side by side */
+.loc-input:hover  { border-color: var(--color-border-hover); }
+.loc-input:focus  { border-color: var(--color-interactive); }
+.loc-input::placeholder { color: var(--color-text-placeholder); }
 .loc-coord-pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  gap: var(--sp-2);
 }
-.loc-coord-pair .loc-label {
-  font-size: 0.48rem;
-}
-
 .loc-btn {
-  background: var(--surf3);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text);
-  font-family: var(--font-hd);
-  font-size: 0.54rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0 14px;
+  background: transparent;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius);
+  color: var(--color-text-interactive);
+  font-family: var(--font);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  text-transform: none;
+  padding: 0 var(--sp-3);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
   white-space: nowrap;
@@ -599,102 +679,92 @@ footer {
   align-items: center;
   justify-content: center;
 }
-.loc-btn:hover  { border-color: var(--tab-accent); color: var(--tab-accent); }
+.loc-btn:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text-int-hover);
+  background: var(--color-bg-hover);
+}
 .loc-btn.primary {
-  background: var(--tab-accent);
-  border-color: var(--tab-accent);
-  color: #000;
+  background: var(--color-interactive);
+  border-color: var(--color-interactive);
+  color: var(--color-text-inverse);
   font-weight: 700;
 }
-.loc-btn.primary:hover { opacity: 0.85; }
-.loc-btn:disabled { opacity: 0.4; cursor: default; }
+.loc-btn.primary:hover {
+  background: var(--color-interactive-hover);
+  border-color: var(--color-interactive-hover);
+}
+.loc-btn:disabled { opacity: var(--opacity-disabled); cursor: default; pointer-events: none; }
+.loc-btn:focus-visible { outline: 1px solid var(--color-border-focus); outline-offset: 2px; }
 
 .loc-status {
-  font-size: 0.58rem;
-  padding: 5px 2px 0;
+  font-size: 0.75rem;
+  padding: 4px 2px 0;
   min-height: 16px;
-  transition: color 0.2s;
+  transition: color 0.15s;
+  letter-spacing: 0.005em;
 }
-.loc-status.ok    { color: var(--s-noon); }
-.loc-status.err   { color: #f87171; }
-.loc-status.busy  { color: var(--muted); }
+.loc-status.ok   { color: var(--color-status-normal); }
+.loc-status.err  { color: var(--color-status-critical); }
+.loc-status.busy { color: var(--color-text-placeholder); }
 
-/* Suggestions dropdown */
+/* ── City suggestions dropdown ── */
 .loc-suggestions {
   position: absolute;
   z-index: 400;
-  background: var(--surf3);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
-  max-height: 200px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius);
   overflow-y: auto;
+  box-shadow: var(--shadow-overlay);
+  max-height: 200px;
   min-width: 240px;
 }
 .loc-sug-item {
-  padding: 9px 12px;
-  font-size: 0.65rem;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: 0.875rem;
   cursor: pointer;
-  border-bottom: 1px solid rgba(27,44,71,0.4);
-  color: var(--text);
-  line-height: 1.4;
+  border-bottom: 1px solid rgba(43,101,155,0.35);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
   transition: background 0.1s;
 }
 .loc-sug-item:last-child { border-bottom: none; }
-.loc-sug-item:hover, .loc-sug-item.focused { background: var(--border); color: #fff; }
-.loc-sug-item strong { color: #fff; }
-.loc-sug-item span   { color: var(--muted); font-size: 0.58rem; }
-
+.loc-sug-item:hover { background: var(--color-bg-hover); color: var(--color-text-primary); }
+.loc-sug-item strong { color: var(--color-text-primary); }
+.loc-sug-item span   { color: var(--color-text-placeholder); font-size: 0.75rem; }
 .loc-wrap { position: relative; }
 
-/* TZ display badge */
-.tz-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: var(--surf3);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 3px 9px;
-  font-size: 0.58rem;
-  color: var(--muted);
-  margin-top: 6px;
-}
-.tz-badge span { color: var(--text); }
-
-/* Loading overlay for data rebuild */
+/* ── Loading overlay ── */
 .rebuilding-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(5,8,15,0.7);
+  background: rgba(16,25,35,0.75);
   z-index: 600;
-  display: flex;
   align-items: center;
   justify-content: center;
   display: none;
 }
 .rebuilding-overlay.show { display: flex; }
 .rebuilding-box {
-  background: var(--surf2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 24px 36px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius);
+  padding: var(--sp-6) var(--sp-6);
   text-align: center;
-  font-family: var(--font-hd);
-  font-size: 0.65rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--tab-accent);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-interactive);
+  box-shadow: var(--shadow-overlay);
 }
 .spin {
   display: inline-block;
   width: 20px; height: 20px;
-  border: 2px solid var(--border);
-  border-top-color: var(--tab-accent);
+  border: 2px solid var(--color-border-default);
+  border-top-color: var(--color-interactive);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
-  margin-bottom: 10px;
+  margin-bottom: var(--sp-2);
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -705,29 +775,32 @@ footer {
   border-collapse: collapse;
   width: 100%;
   min-width: 640px;
-  font-size: clamp(0.48rem, 1.2vw, 0.58rem);
+  font-size: clamp(0.48rem, 1.2vw, 0.75rem);
 }
 .moon-cal-table th {
-  font-family: var(--font-hd);
-  font-size: 0.5rem;
-  letter-spacing: 0.12em;
-  color: var(--muted);
-  text-transform: uppercase;
-  padding: 4px 2px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  color: var(--color-text-placeholder);
+  padding: var(--sp-1) 2px;
   text-align: center;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--color-border-default);
 }
 .moon-cal-table td {
   padding: 2px 1px;
   text-align: center;
   vertical-align: middle;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: var(--radius);
   transition: background 0.1s;
   position: relative;
 }
-.moon-cal-table td:hover { background: var(--surf3); }
-.moon-cal-table td.selected-day { outline: 2px solid var(--s-sel); outline-offset: -1px; border-radius: 3px; }
+.moon-cal-table td:hover { background: var(--color-bg-hover); }
+.moon-cal-table td.selected-day {
+  outline: 2px solid var(--color-interactive);
+  outline-offset: -1px;
+  border-radius: var(--radius);
+}
 .moon-cell {
   display: flex;
   flex-direction: column;
@@ -735,88 +808,78 @@ footer {
   gap: 1px;
   padding: 3px 1px;
 }
-.moon-icon { font-size: clamp(0.9rem, 2.2vw, 1.2rem); line-height: 1; }
-.moon-day-num { font-size: 0.48rem; color: var(--muted); }
-.moon-illum { font-size: 0.46rem; color: var(--text); opacity: 0.7; }
-.moon-cal-month-label {
-  font-family: var(--font-hd);
-  font-size: 0.52rem;
-  letter-spacing: 0.14em;
-  color: var(--muted);
-  text-transform: uppercase;
-  padding: 8px 4px 2px;
-  text-align: left;
-}
+.moon-icon    { font-size: clamp(0.9rem, 2.2vw, 1.1rem); line-height: 1; }
+.moon-day-num { font-size: 0.75rem; color: var(--color-text-placeholder); }
+.moon-illum   { font-size: 0.625rem; color: var(--color-text-secondary); opacity: 0.8; }
 
 /* ══════════════════════════════════════
-   MOBILE TWEAKS
+   MOBILE
 ══════════════════════════════════════ */
 @media (max-width: 480px) {
-  .tab-btn { padding: 10px 4px; }
-  .tab-btn .tab-icon { font-size: 1rem; }
+  .tab-btn { padding: var(--sp-2) var(--sp-1); font-size: 0.75rem; }
   .stats-row { grid-template-columns: repeat(2, 1fr); }
   .arc-col { min-width: 0; width: 100%; }
   #sharedArcCanvas { width: 100% !important; height: auto !important; }
+  .tab-nav { margin: 0; }
 }
+
 /* ══════════════════════════════════════
-   PWA INSTALL BANNER
+   PWA INSTALL BANNER (Astro Notification Banner pattern)
 ══════════════════════════════════════ */
 #pwa-banner {
   display: none;
   position: fixed;
-  bottom: 16px;
+  bottom: var(--sp-4);
   left: 50%;
   transform: translateX(-50%);
   z-index: 700;
-  background: var(--surf2);
-  border: 1px solid var(--s-bmnt);
-  border-radius: 8px;
-  padding: 12px 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-interactive);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  box-shadow: var(--shadow-overlay);
   display: flex;
   align-items: center;
-  gap: 12px;
-  max-width: calc(100vw - 32px);
-  animation: slideUp 0.3s ease;
+  gap: var(--sp-3);
+  max-width: calc(100vw - 2rem);
+  animation: slideUp 0.2s ease;
 }
 #pwa-banner.hidden { display: none !important; }
 @keyframes slideUp {
-  from { opacity:0; transform: translateX(-50%) translateY(20px); }
+  from { opacity:0; transform: translateX(-50%) translateY(12px); }
   to   { opacity:1; transform: translateX(-50%) translateY(0); }
 }
-#pwa-banner .pwa-icon { font-size: 1.4rem; flex-shrink: 0; }
-#pwa-banner .pwa-text {
-  font-size: clamp(0.58rem, 1.5vw, 0.68rem);
-  color: var(--text);
-  line-height: 1.4;
-}
-#pwa-banner .pwa-text strong { color: #fff; }
-#pwa-banner .pwa-btns { display: flex; gap: 8px; flex-shrink: 0; }
+#pwa-banner .pwa-icon { font-size: 1.25rem; flex-shrink: 0; }
+#pwa-banner .pwa-text { font-size: 0.875rem; color: var(--color-text-secondary); line-height: 1.5; }
+#pwa-banner .pwa-text strong { color: var(--color-text-primary); font-weight: 500; }
+#pwa-banner .pwa-btns { display: flex; gap: var(--sp-2); flex-shrink: 0; }
 #pwa-install-btn {
-  background: var(--s-bmnt);
+  background: var(--color-interactive);
   border: none;
-  border-radius: 4px;
-  color: #000;
-  font-family: var(--font-hd);
-  font-size: 0.56rem;
+  border-radius: var(--radius);
+  color: var(--color-text-inverse);
+  font-family: var(--font);
+  font-size: 0.875rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  padding: 7px 14px;
+  padding: var(--sp-1) var(--sp-3);
   cursor: pointer;
   white-space: nowrap;
+  transition: background 0.15s;
 }
+#pwa-install-btn:hover { background: var(--color-interactive-hover); }
 #pwa-dismiss-btn {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius);
+  color: var(--color-text-placeholder);
   font-family: var(--font);
-  font-size: 0.7rem;
-  padding: 6px 10px;
+  font-size: 0.875rem;
+  padding: var(--sp-1) var(--sp-2);
   cursor: pointer;
   line-height: 1;
+  transition: border-color 0.15s, color 0.15s;
 }
-#pwa-dismiss-btn:hover { color: var(--text); border-color: var(--muted); }
+#pwa-dismiss-btn:hover { color: var(--color-text-secondary); border-color: var(--color-border-hover); }
 </style>
 </head>
 <body>
@@ -1383,7 +1446,9 @@ function switchTab(tab) {
   document.getElementById('tab-'+tab).classList.add('active');
   document.getElementById('content-'+tab).classList.add('active');
 
-  const accent = tab==='solar' ? 'var(--s-bmnt)' : tab==='photo' ? 'var(--p-golden)' : '#a78bfa';
+  const accent = tab==='solar' ? '#4dacff'   /* brightblue-500 */
+               : tab==='photo' ? '#ffb302'   /* orange-500 / gold hour */
+               :                 '#938bdb';  /* purple-400 / moon */
   document.documentElement.style.setProperty('--tab-accent', accent);
 
   const badge = document.getElementById('qualBadge');
@@ -1414,7 +1479,7 @@ function buildStats() {
 
   document.getElementById('solarStats').innerHTML =
     sc(fmtHrs(maxDay.daylight),'Max Daylight', msFirst?'Midnight Sun Season':MONTHS[maxDay.date.getUTCMonth()]+' '+maxDay.date.getUTCDate(), '#f5e642') +
-    sc(fmtHrs(minDay.daylight),'Min Daylight', MONTHS[minDay.date.getUTCMonth()]+' '+minDay.date.getUTCDate(), '#3d5870') +
+    sc(fmtHrs(minDay.daylight),'Min Daylight', MONTHS[minDay.date.getUTCMonth()]+' '+minDay.date.getUTCDate(), '#a4abb6') +
     sc(maxEl.maxElev.toFixed(1)+'°','Peak Elevation','Summer solstice','#c084fc') +
     sc(minEl.maxElev.toFixed(1)+'°','Min Elevation','Winter solstice','#60c5ff') +
     sc(fmtRate(maxRate.rate),'Peak Gain Rate',MONTHS[maxRate.date.getUTCMonth()]+' '+maxRate.date.getUTCDate(),'#42e8c8') +
@@ -1511,9 +1576,9 @@ function updateDayDetail(doy) {
       html += row('Max Elevation',d.maxElev.toFixed(1)+'°','#c084fc');
       html += row('Δ Daylight',fmtRate(d.rate),d.rate>=0?'#42e8c8':'#ff7e42');
     } else if (d.polarNight) {
-      html += row('Status','● Polar Night','#3d5870');
+      html += row('Status','● Polar Night','#a4abb6');
       html += row('Max Elevation',d.maxElev.toFixed(1)+'°','#c084fc');
-      html += row('Δ Daylight',fmtRate(d.rate),'#3d5870');
+      html += row('Δ Daylight',fmtRate(d.rate),'#a4abb6');
     } else {
       if (d.bmnt)    html += row('BMNT',    minToStr(d.bmnt),    '#60c5ff');
       if (d.sunrise) html += row('Sunrise', minToStr(d.sunrise), '#f5e642');
@@ -1634,8 +1699,8 @@ function drawArc(doy) {
   const xOfMin = m => PAD.l + ((m % 1440) / 1440) * CW;
 
   if (doy == null || !data[doy]) {
-    ctx.fillStyle = 'rgba(61,88,112,0.5)';
-    ctx.font = '10px IBM Plex Mono';
+    ctx.fillStyle = 'rgba(164,171,182,0.5)';
+    ctx.font = '10px Roboto';
     ctx.textAlign = 'center';
     ctx.fillText('Select a date', W/2, H/2);
     ctx.textAlign = 'left';
@@ -1667,7 +1732,7 @@ function drawArc(doy) {
 
   // ── Background twilight bands by solar elevation ──
   const BAND = {
-    night:'rgba(5,8,15,0.95)', astro:'rgba(18,12,55,0.88)',
+    night:'rgba(16,25,35,0.95)', astro:'rgba(18,12,55,0.88)',
     blueDeep:'rgba(18,32,88,0.78)', blue:'rgba(22,52,115,0.62)',
     golden:'rgba(95,50,4,0.48)', warm:'rgba(75,38,4,0.32)', harsh:'rgba(45,45,18,0.22)'
   };
@@ -1682,11 +1747,11 @@ function drawArc(doy) {
   for (let el = Math.ceil(ALT_MIN/10)*10; el <= ALT_MAX; el += 10) {
     const y = yOfAlt(el), isH = el === 0;
     ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(PAD.l+CW, y);
-    ctx.strokeStyle = isH ? 'rgba(96,197,255,0.6)' : 'rgba(27,44,71,0.55)';
+    ctx.strokeStyle = isH ? 'rgba(96,197,255,0.6)' : 'rgba(43,101,155,0.55)';
     ctx.lineWidth   = isH ? 1.5 : 0.8;
     ctx.stroke();
-    ctx.fillStyle = isH ? 'rgba(96,197,255,0.7)' : 'rgba(61,88,112,0.65)';
-    ctx.font = '8px IBM Plex Mono';
+    ctx.fillStyle = isH ? 'rgba(96,197,255,0.7)' : 'rgba(164,171,182,0.65)';
+    ctx.font = '8px Roboto';
     ctx.textAlign = 'right';
     ctx.fillText(el + '°', PAD.l - 3, y + 3);
     ctx.textAlign = 'left';
@@ -1695,7 +1760,7 @@ function drawArc(doy) {
 
   // Horizon label
   ctx.fillStyle = 'rgba(96,197,255,0.45)';
-  ctx.font = '7px IBM Plex Mono';
+  ctx.font = '7px Roboto';
   ctx.fillText('HORIZON', PAD.l + 3, yOfAlt(0) - 3);
 
   // ── X axis: clock time labels every 3h ──
@@ -1704,11 +1769,11 @@ function drawArc(doy) {
     const x = xOfMin(h * 60);
     if (x < PAD.l || x > PAD.l + CW) continue;
     ctx.beginPath(); ctx.moveTo(x, PAD.t); ctx.lineTo(x, PAD.t+CH);
-    ctx.strokeStyle = h===12 ? 'rgba(66,232,200,0.18)' : 'rgba(27,44,71,0.4)';
+    ctx.strokeStyle = h===12 ? 'rgba(66,232,200,0.18)' : 'rgba(43,101,155,0.4)';
     ctx.lineWidth = 0.8; ctx.stroke();
     const lbl = h===0||h===24?'12AM':h===12?'12PM':h>12?`${h-12}PM`:`${h}AM`;
-    ctx.fillStyle = h===12 ? 'rgba(66,232,200,0.5)' : 'rgba(61,88,112,0.6)';
-    ctx.font = '8px IBM Plex Mono';
+    ctx.fillStyle = h===12 ? 'rgba(66,232,200,0.5)' : 'rgba(164,171,182,0.6)';
+    ctx.font = '8px Roboto';
     ctx.fillText(lbl, x, PAD.t+CH+16);
   }
   ctx.textAlign = 'left';
@@ -1725,7 +1790,7 @@ function drawArc(doy) {
     const p = sunPts[i-1], q = sunPts[i], avg = (p.alt+q.alt)/2;
     let col;
     if (activeTab === 'photo') {
-      col = CAT_DISPLAY[elevCat(avg)]?.color || 'rgba(61,88,112,0.5)';
+      col = CAT_DISPLAY[elevCat(avg)]?.color || 'rgba(164,171,182,0.5)';
     } else {
       if      (avg < -18) col = 'rgba(0,0,0,0)';
       else if (avg < -12) col = 'rgba(75,55,175,0.7)';
@@ -1772,7 +1837,7 @@ function drawArc(doy) {
       ctx.beginPath(); ctx.arc(xOfMin(mp.lm), yOfAlt(mp.alt), 4, 0, Math.PI*2);
       ctx.fillStyle = '#a78bfa'; ctx.shadowBlur = 8; ctx.shadowColor = '#a78bfa'; ctx.fill(); ctx.shadowBlur = 0;
       if (mp.alt > 0) {
-        ctx.fillStyle = '#a78bfa'; ctx.font = 'bold 8px IBM Plex Mono'; ctx.textAlign = 'center';
+        ctx.fillStyle = '#a78bfa'; ctx.font = 'bold 8px Roboto'; ctx.textAlign = 'center';
         ctx.fillText(mp.alt.toFixed(1)+'°', xOfMin(mp.lm), yOfAlt(mp.alt)-8);
         ctx.textAlign = 'left';
       }
@@ -1784,12 +1849,12 @@ function drawArc(doy) {
       const x = xOfMin(lm);
       ctx.beginPath(); ctx.moveTo(x, yHorizon-5); ctx.lineTo(x, yHorizon+5);
       ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.stroke();
-      ctx.fillStyle=col; ctx.font='bold 7px IBM Plex Mono'; ctx.textAlign='center';
+      ctx.fillStyle=col; ctx.font='bold 7px Roboto'; ctx.textAlign='center';
       ctx.fillText(lbl, x, yHorizon+14); ctx.textAlign='left';
     });
 
     // Phase label top-right
-    ctx.fillStyle = 'rgba(167,139,250,0.65)'; ctx.font = '8px IBM Plex Mono'; ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(167,139,250,0.65)'; ctx.font = '8px Roboto'; ctx.textAlign = 'right';
     ctx.fillText(`${md.emoji} ${md.phaseName}  ${Math.round(md.illumination*100)}%`, PAD.l+CW-3, PAD.t+11);
     ctx.textAlign = 'left';
   }
@@ -1803,7 +1868,7 @@ function drawArc(doy) {
     ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI*2);
     ctx.fillStyle='#f5e642'; ctx.shadowBlur=12; ctx.shadowColor='#f5e642'; ctx.fill(); ctx.shadowBlur=0;
     ctx.fillStyle = activeTab==='photo' ? '#f59e0b' : '#c084fc';
-    ctx.font='bold 9px IBM Plex Mono'; ctx.textAlign='center';
+    ctx.font='bold 9px Roboto'; ctx.textAlign='center';
     ctx.fillText(peak.alt.toFixed(1)+'°', px, Math.max(py-9, PAD.t+9));
     ctx.textAlign='left';
   }
@@ -1816,7 +1881,7 @@ function drawArc(doy) {
       if (x<PAD.l||x>PAD.l+CW) return;
       ctx.beginPath(); ctx.moveTo(x,yHorizon-5); ctx.lineTo(x,yHorizon+5);
       ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.stroke();
-      ctx.fillStyle=col; ctx.font='bold 7px IBM Plex Mono'; ctx.textAlign='center';
+      ctx.fillStyle=col; ctx.font='bold 7px Roboto'; ctx.textAlign='center';
       ctx.fillText(lbl, x, yHorizon-8); ctx.textAlign='left';
     });
   }
@@ -1830,18 +1895,18 @@ function drawArc(doy) {
       ctx.beginPath(); ctx.moveTo(x,PAD.t); ctx.lineTo(x,PAD.t+CH);
       ctx.strokeStyle=col.replace('0.6','0.28'); ctx.lineWidth=1;
       ctx.setLineDash([3,4]); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle=col; ctx.font='7px IBM Plex Mono'; ctx.textAlign='center';
+      ctx.fillStyle=col; ctx.font='7px Roboto'; ctx.textAlign='center';
       ctx.fillText(lbl, x, PAD.t+9); ctx.textAlign='left';
     });
   }
 
   // ── Polar annotations ──
   if (d.polarDay) {
-    ctx.fillStyle='rgba(245,230,66,0.55)'; ctx.font='8px IBM Plex Mono';
+    ctx.fillStyle='rgba(245,230,66,0.55)'; ctx.font='8px Roboto';
     ctx.textAlign='center'; ctx.fillText('☀ Midnight Sun — sun above horizon all day', W/2, PAD.t+10); ctx.textAlign='left';
   }
   if (d.polarNight) {
-    ctx.fillStyle='rgba(61,88,112,0.6)'; ctx.font='10px IBM Plex Mono';
+    ctx.fillStyle='rgba(164,171,182,0.6)'; ctx.font='10px Roboto';
     ctx.textAlign='center'; ctx.fillText('Polar Night — sun below horizon all day', W/2, H/2); ctx.textAlign='left';
   }
 }
@@ -1851,13 +1916,13 @@ function drawArc(doy) {
 //  CHART DRAW HELPERS
 // ══════════════════════════════════════════════════════════════
 function drawMonthGrid(ctx, xOf, P, CH, DPR, fontName) {
-  ctx.fillStyle='rgba(61,88,112,0.8)';
-  ctx.font=`${9*DPR}px ${fontName||'IBM Plex Mono'}`;
+  ctx.fillStyle='rgba(164,171,182,0.8)';
+  ctx.font=`${9*DPR}px ${fontName||'Roboto'}`;
   MONTH_STARTS.forEach((doy,i)=>{
     const x=xOf(doy);
     ctx.fillText(MONTHS[i],x,P.t+CH+22*DPR);
     ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
-    ctx.strokeStyle='rgba(27,44,71,0.45)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.strokeStyle='rgba(43,101,155,0.45)'; ctx.lineWidth=1; ctx.stroke();
   });
 }
 function drawSolsticeLines(ctx,xOf,P,CH,DPR) {
@@ -1867,7 +1932,7 @@ function drawSolsticeLines(ctx,xOf,P,CH,DPR) {
     ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
     ctx.strokeStyle=e.c+'40'; ctx.lineWidth=1.5*DPR;
     ctx.setLineDash([3*DPR,3*DPR]); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle=e.c; ctx.font=`${8*DPR}px Orbitron`;
+    ctx.fillStyle=e.c; ctx.font=`${8*DPR}px Roboto`;
     ctx.fillText(e.lbl,x-5*DPR,P.t+11*DPR);
   });
 }
@@ -1892,7 +1957,7 @@ function drawSChart1() {
   const xOf=doy=>P.l+(doy/364)*CW;
   const yOf=min=>P.t+CH-(min/1440)*CH;
 
-  ctx.fillStyle='#05080f'; ctx.fillRect(P.l,P.t,CW,CH);
+  ctx.fillStyle='#101923'; ctx.fillRect(P.l,P.t,CW,CH);
 
   for (const d of data) {
     const x=xOf(d.doy), w=CW/364+1;
@@ -1930,8 +1995,8 @@ function drawSChart1() {
   [0,3,6,9,12,15,18,21,24].forEach(h=>{
     const y=yOf(h*60);
     ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
-    ctx.strokeStyle='rgba(27,44,71,0.75)'; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle='rgba(61,88,112,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    ctx.strokeStyle='rgba(43,101,155,0.75)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(164,171,182,0.8)'; ctx.font=`${9*DPR}px Roboto`;
     const lbl=h===0||h===24?'12AM':h===12?'12PM':h>12?`${h-12}PM`:`${h}AM`;
     ctx.fillText(lbl,P.l-ctx.measureText(lbl).width-4*DPR,y+3*DPR);
   });
@@ -1939,7 +2004,7 @@ function drawSChart1() {
   [{key:'bmnt',lbl:'BMNT',c:'rgba(96,197,255,0.85)'},{key:'sunrise',lbl:'SR',c:'rgba(245,230,66,0.9)'},
    {key:'eent',lbl:'EENT',c:'rgba(255,126,66,0.85)'},{key:'sunset',lbl:'SET',c:'rgba(245,200,48,0.75)'}].forEach(l=>{
     const ref=data[170]; if(!ref[l.key])return;
-    ctx.fillStyle=l.c; ctx.font=`bold ${8*DPR}px IBM Plex Mono`;
+    ctx.fillStyle=l.c; ctx.font=`bold ${8*DPR}px Roboto`;
     ctx.fillText(l.lbl,P.l+CW+4*DPR,yOf(ref[l.key])+3*DPR);
   });
   drawMonthGrid(ctx,xOf,P,CH,DPR);
@@ -1974,7 +2039,7 @@ function drawSChart2() {
     ctx.beginPath(); ctx.moveTo(P.l,y0); ctx.lineTo(P.l+CW,y0);
     ctx.strokeStyle='rgba(96,197,255,0.4)'; ctx.lineWidth=1.5*DPR;
     ctx.setLineDash([4*DPR,4*DPR]); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle='rgba(96,197,255,0.45)'; ctx.font=`${8*DPR}px IBM Plex Mono`;
+    ctx.fillStyle='rgba(96,197,255,0.45)'; ctx.font=`${8*DPR}px Roboto`;
     ctx.fillText('0°',P.l+3*DPR,y0-4*DPR);
   }
   ctx.beginPath();
@@ -1986,8 +2051,8 @@ function drawSChart2() {
     if(el<minE||el>maxE)return;
     const y=yOf(el);
     ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
-    ctx.strokeStyle='rgba(27,44,71,0.75)'; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle='rgba(61,88,112,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    ctx.strokeStyle='rgba(43,101,155,0.75)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(164,171,182,0.8)'; ctx.font=`${9*DPR}px Roboto`;
     ctx.fillText(el+'°',P.l-ctx.measureText(el+'°').width-4*DPR,y+3*DPR);
   });
   ctx.setLineDash([]);
@@ -1995,13 +2060,13 @@ function drawSChart2() {
   [[data[171],'#f5e642'],[data[354],'#60c5ff']].forEach(([d,c])=>{
     const x=xOf(d.doy),y=yOf(d.maxElev);
     ctx.beginPath(); ctx.arc(x,y,5*DPR,0,Math.PI*2); ctx.fillStyle=c; ctx.fill();
-    ctx.fillStyle=c; ctx.font=`bold ${9*DPR}px IBM Plex Mono`;
+    ctx.fillStyle=c; ctx.font=`bold ${9*DPR}px Roboto`;
     ctx.fillText(d.maxElev.toFixed(1)+'°',x+7*DPR,y+(d===data[171]?-6*DPR:14*DPR));
   });
   if (selectedDoy!=null) {
     const d=data[selectedDoy], x=xOf(d.doy), y=yOf(d.maxElev);
     ctx.beginPath(); ctx.arc(x,y,5*DPR,0,Math.PI*2); ctx.fillStyle='#ff4fc8'; ctx.fill();
-    ctx.fillStyle='#ff4fc8'; ctx.font=`bold ${9*DPR}px IBM Plex Mono`;
+    ctx.fillStyle='#ff4fc8'; ctx.font=`bold ${9*DPR}px Roboto`;
     ctx.fillText(d.maxElev.toFixed(1)+'°',x+7*DPR,y-5*DPR);
   }
   drawMonthGrid(ctx,xOf,P,CH,DPR); drawSolsticeLines(ctx,xOf,P,CH,DPR); drawSelLine(ctx,xOf,P,CH,DPR);
@@ -2045,7 +2110,7 @@ function drawSChart3() {
     const x=xOf(a.doy);
     ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
     ctx.strokeStyle=a.c+'35'; ctx.lineWidth=1.5*DPR; ctx.setLineDash([3*DPR,3*DPR]); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle=a.c; ctx.font=`${7*DPR}px Orbitron`; ctx.textAlign='center';
+    ctx.fillStyle=a.c; ctx.font=`${7*DPR}px Roboto`; ctx.textAlign='center';
     a.lbl.split('\n').forEach((l,li)=>ctx.fillText(l,x,P.t+(8+li*9)*DPR));
     ctx.textAlign='left';
   });
@@ -2054,8 +2119,8 @@ function drawSChart3() {
     if(Math.abs(r)>maxR)return;
     const y=yOf(r);
     ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
-    ctx.strokeStyle='rgba(27,44,71,0.7)'; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle='rgba(61,88,112,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    ctx.strokeStyle='rgba(43,101,155,0.7)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(164,171,182,0.8)'; ctx.font=`${9*DPR}px Roboto`;
     const lbl=`${r>0?'+':''}${r}m`;
     ctx.fillText(lbl,P.l-ctx.measureText(lbl).width-4*DPR,y+3*DPR);
   });
@@ -2065,7 +2130,7 @@ function drawSChart3() {
   [[pg,'#42e8c8'],[pl,'#ff7e42']].forEach(([d,c])=>{
     const x=xOf(d.doy),y=yOf(d.rate);
     ctx.beginPath(); ctx.arc(x,y,4*DPR,0,Math.PI*2); ctx.fillStyle=c; ctx.fill();
-    ctx.fillStyle=c; ctx.font=`${8*DPR}px IBM Plex Mono`;
+    ctx.fillStyle=c; ctx.font=`${8*DPR}px Roboto`;
     ctx.fillText(fmtRate(d.rate),x+5*DPR,y+(d.rate>0?-5*DPR:12*DPR));
   });
   if (selectedDoy!=null) {
@@ -2089,7 +2154,7 @@ function drawPChart1() {
   const xOf=doy=>P.l+(doy/364)*CW;
   const yOf=min=>P.t+CH-(min/1440)*CH;
 
-  ctx.fillStyle='#0c0a08'; ctx.fillRect(P.l,P.t,CW,CH);
+  ctx.fillStyle='#1b2d3e'; ctx.fillRect(P.l,P.t,CW,CH);
 
   const STEP=6;
   for (const d of data) {
@@ -2109,8 +2174,8 @@ function drawPChart1() {
   [0,3,6,9,12,15,18,21,24].forEach(h=>{
     const y=yOf(h*60);
     ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
-    ctx.strokeStyle='rgba(45,38,32,0.8)'; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle='rgba(90,78,58,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    ctx.strokeStyle='rgba(43,101,155,0.4,0.8)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(164,171,182,0.8)'; ctx.font=`${9*DPR}px Roboto`;
     const lbl=h===0||h===24?'12AM':h===12?'12PM':h>12?`${h-12}PM`:`${h}AM`;
     ctx.fillText(lbl,P.l-ctx.measureText(lbl).width-4*DPR,y+3*DPR);
   });
@@ -2118,8 +2183,8 @@ function drawPChart1() {
   MONTH_STARTS.forEach((doy,i)=>{
     const x=xOf(doy);
     ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
-    ctx.strokeStyle='rgba(45,38,32,0.5)'; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle='rgba(90,78,58,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    ctx.strokeStyle='rgba(43,101,155,0.4,0.5)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(164,171,182,0.8)'; ctx.font=`${9*DPR}px Roboto`;
     ctx.fillText(MONTHS[i],x,P.t+CH+22*DPR);
   });
   [{doy:79,lbl:'VE',c:'#34d399'},{doy:171,lbl:'SS',c:'#f59e0b'},
@@ -2127,7 +2192,7 @@ function drawPChart1() {
     const x=xOf(e.doy);
     ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
     ctx.strokeStyle=e.c+'40'; ctx.lineWidth=1.5*DPR; ctx.setLineDash([3*DPR,3*DPR]); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle=e.c; ctx.font=`${8*DPR}px IBM Plex Mono`; ctx.fillText(e.lbl,x-5*DPR,P.t+11*DPR);
+    ctx.fillStyle=e.c; ctx.font=`${8*DPR}px Roboto`; ctx.fillText(e.lbl,x-5*DPR,P.t+11*DPR);
   });
   drawSelLine(ctx,xOf,P,CH,DPR,'rgba(244,63,94,0.9)');
 }
@@ -2164,7 +2229,7 @@ function drawPChart2() {
   ctx.strokeStyle='rgba(52,211,153,0.9)'; ctx.lineWidth=2*DPR; ctx.lineJoin='round'; ctx.stroke();
 
   [0,25,50,75,100].forEach(s=>{
-    ctx.fillStyle='rgba(52,211,153,0.45)'; ctx.font=`${8*DPR}px IBM Plex Mono`;
+    ctx.fillStyle='rgba(52,211,153,0.45)'; ctx.font=`${8*DPR}px Roboto`;
     ctx.fillText(s,P.l+CW+4*DPR,yOfS(s)+3*DPR);
   });
   ctx.setLineDash([2*DPR,5*DPR]);
@@ -2172,12 +2237,12 @@ function drawPChart2() {
     if(m>maxMins)return;
     const y=yOfM(m);
     ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
-    ctx.strokeStyle='rgba(45,38,32,0.7)'; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle='rgba(90,78,58,0.75)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    ctx.strokeStyle='rgba(43,101,155,0.4,0.7)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(164,171,182,0.75)'; ctx.font=`${9*DPR}px Roboto`;
     ctx.fillText(m+'m',P.l-ctx.measureText(m+'m').width-4*DPR,y+3*DPR);
   });
   ctx.setLineDash([]);
-  drawMonthGrid(ctx,xOf,P,CH,DPR,'IBM Plex Mono');
+  drawMonthGrid(ctx,xOf,P,CH,DPR,'Roboto');
   if (selectedDoy!=null) {
     const x=xOf(selectedDoy),y=yOfS(data[selectedDoy].score);
     ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,P.t+CH);
@@ -2509,16 +2574,16 @@ function drawSChart4() {
   for (let a = Math.ceil(minAlt/5)*5; a <= maxAlt; a += 5) {
     const y = yOf(a);
     ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(P.l+CW, y);
-    ctx.strokeStyle = 'rgba(27,44,71,0.7)'; ctx.lineWidth = 1; ctx.stroke();
-    ctx.fillStyle = 'rgba(61,88,112,0.8)'; ctx.font = `${9*DPR}px IBM Plex Mono`;
+    ctx.strokeStyle = 'rgba(43,101,155,0.7)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = 'rgba(164,171,182,0.8)'; ctx.font = `${9*DPR}px Roboto`;
     ctx.fillText(a+'°', P.l - ctx.measureText(a+'°').width - 4*DPR, y + 3*DPR);
   }
   // Az grid
   for (let z = Math.ceil(minAz); z <= maxAz; z += 1) {
     const x = xOf(z);
     ctx.beginPath(); ctx.moveTo(x, P.t); ctx.lineTo(x, P.t+CH);
-    ctx.strokeStyle = 'rgba(27,44,71,0.5)'; ctx.lineWidth = 1; ctx.stroke();
-    ctx.fillStyle = 'rgba(61,88,112,0.7)'; ctx.font = `${9*DPR}px IBM Plex Mono`;
+    ctx.strokeStyle = 'rgba(43,101,155,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = 'rgba(164,171,182,0.7)'; ctx.font = `${9*DPR}px Roboto`;
     ctx.textAlign = 'center';
     ctx.fillText(z.toFixed(0)+'°', x, P.t+CH+16*DPR);
     ctx.textAlign = 'left';
@@ -2526,7 +2591,7 @@ function drawSChart4() {
   ctx.setLineDash([]);
 
   // Axis labels
-  ctx.fillStyle = 'rgba(61,88,112,0.7)'; ctx.font = `${8*DPR}px IBM Plex Mono`;
+  ctx.fillStyle = 'rgba(164,171,182,0.7)'; ctx.font = `${8*DPR}px Roboto`;
   ctx.textAlign = 'center';
   ctx.fillText('← West of South · Azimuth at Solar Noon · East of South →', P.l + CW/2, P.t+CH+28*DPR);
   ctx.save(); ctx.translate(P.l - 38*DPR, P.t + CH/2);
@@ -2570,7 +2635,7 @@ function drawSChart4() {
     ctx.fillStyle = '#fff'; ctx.fill();
     ctx.strokeStyle = 'rgba(192,132,252,0.7)'; ctx.lineWidth = 1.5*DPR; ctx.stroke();
     ctx.fillStyle = 'rgba(192,132,252,0.85)';
-    ctx.font = `bold ${8*DPR}px Orbitron`;
+    ctx.font = `bold ${8*DPR}px Roboto`;
     ctx.textAlign = 'center';
     ctx.fillText(MONTHS[mi], x, y - 7*DPR);
     ctx.textAlign = 'left';
@@ -2582,7 +2647,7 @@ function drawSChart4() {
     const x = xOf(p.az), y = yOf(p.alt);
     ctx.beginPath(); ctx.arc(x, y, 6*DPR, 0, Math.PI*2);
     ctx.fillStyle = e.c; ctx.shadowBlur = 8*DPR; ctx.shadowColor = e.c; ctx.fill(); ctx.shadowBlur = 0;
-    ctx.fillStyle = e.c; ctx.font = `bold ${8*DPR}px Orbitron`;
+    ctx.fillStyle = e.c; ctx.font = `bold ${8*DPR}px Roboto`;
     ctx.textAlign = 'center';
     ctx.fillText(e.l, x, y - 9*DPR);
     ctx.textAlign = 'left';
@@ -2595,7 +2660,7 @@ function drawSChart4() {
     ctx.beginPath(); ctx.arc(x, y, 7*DPR, 0, Math.PI*2);
     ctx.fillStyle = 'var(--s-sel)';
     ctx.fillStyle = '#ff4fc8'; ctx.shadowBlur = 12*DPR; ctx.shadowColor = '#ff4fc8'; ctx.fill(); ctx.shadowBlur = 0;
-    ctx.fillStyle = '#ff4fc8'; ctx.font = `bold ${9*DPR}px IBM Plex Mono`;
+    ctx.fillStyle = '#ff4fc8'; ctx.font = `bold ${9*DPR}px Roboto`;
     ctx.textAlign = 'center';
     const d = data[selectedDoy];
     ctx.fillText(`${MONTHS[d.date.getUTCMonth()]} ${d.date.getUTCDate()}`, x, y - 11*DPR);
@@ -2694,7 +2759,7 @@ function drawMChart1() {
     ctx.beginPath(); ctx.moveTo(P.l, y0); ctx.lineTo(P.l+CW, y0);
     ctx.strokeStyle='rgba(96,197,255,0.35)'; ctx.lineWidth=1.5*DPR;
     ctx.setLineDash([4*DPR,4*DPR]); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle='rgba(96,197,255,0.4)'; ctx.font=`${8*DPR}px IBM Plex Mono`;
+    ctx.fillStyle='rgba(96,197,255,0.4)'; ctx.font=`${8*DPR}px Roboto`;
     ctx.fillText('0°', P.l+3*DPR, y0-4*DPR);
   }
 
@@ -2721,8 +2786,8 @@ function drawMChart1() {
   for (let el = Math.ceil(minE/10)*10; el <= maxE; el += 10) {
     const y = yOf(el);
     ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
-    ctx.strokeStyle='rgba(27,44,71,0.7)'; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle='rgba(61,88,112,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    ctx.strokeStyle='rgba(43,101,155,0.7)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(164,171,182,0.8)'; ctx.font=`${9*DPR}px Roboto`;
     ctx.fillText(el+'°', P.l-ctx.measureText(el+'°').width-4*DPR, y+3*DPR);
   }
   ctx.setLineDash([]);
@@ -2733,7 +2798,7 @@ function drawMChart1() {
     const x = xOf(md.doy), y = yOf(md.maxMoonElev);
     ctx.beginPath(); ctx.arc(x,y,5*DPR,0,Math.PI*2);
     ctx.fillStyle='#ff4fc8'; ctx.shadowBlur=10*DPR; ctx.shadowColor='#ff4fc8'; ctx.fill(); ctx.shadowBlur=0;
-    ctx.fillStyle='#ff4fc8'; ctx.font=`bold ${9*DPR}px IBM Plex Mono`;
+    ctx.fillStyle='#ff4fc8'; ctx.font=`bold ${9*DPR}px Roboto`;
     ctx.textAlign='center';
     ctx.fillText(md.maxMoonElev.toFixed(1)+'°', x, y-9*DPR);
     ctx.textAlign='left';
@@ -2774,7 +2839,7 @@ function drawMChart3() {
   ctx.beginPath(); ctx.moveTo(P.l, ySuper); ctx.lineTo(P.l+CW, ySuper);
   ctx.strokeStyle='rgba(244,63,94,0.55)'; ctx.lineWidth=1.5*DPR;
   ctx.setLineDash([5*DPR,4*DPR]); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle='rgba(244,63,94,0.7)'; ctx.font=`${8*DPR}px IBM Plex Mono`;
+  ctx.fillStyle='rgba(244,63,94,0.7)'; ctx.font=`${8*DPR}px Roboto`;
   ctx.textAlign='right';
   ctx.fillText('SUPERMOON ≤362,000km', P.l+CW-4*DPR, ySuper-4*DPR);
   ctx.textAlign='left';
@@ -2784,7 +2849,7 @@ function drawMChart3() {
   ctx.beginPath(); ctx.moveTo(P.l, yMicro); ctx.lineTo(P.l+CW, yMicro);
   ctx.strokeStyle='rgba(124,58,237,0.35)'; ctx.lineWidth=1*DPR;
   ctx.setLineDash([4*DPR,4*DPR]); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle='rgba(124,58,237,0.5)'; ctx.font=`${8*DPR}px IBM Plex Mono`;
+  ctx.fillStyle='rgba(124,58,237,0.5)'; ctx.font=`${8*DPR}px Roboto`;
   ctx.textAlign='right';
   ctx.fillText('MICROMOON ≥405,000km', P.l+CW-4*DPR, yMicro+12*DPR);
   ctx.textAlign='left';
@@ -2817,7 +2882,7 @@ function drawMChart3() {
       const x=xOf(md.doy), y=yOf(md.dist);
       ctx.beginPath(); ctx.arc(x,y,6*DPR,0,Math.PI*2);
       ctx.fillStyle='#f43f5e'; ctx.shadowBlur=12*DPR; ctx.shadowColor='#f43f5e'; ctx.fill(); ctx.shadowBlur=0;
-      ctx.fillStyle='#f43f5e'; ctx.font=`bold ${8*DPR}px Orbitron`;
+      ctx.fillStyle='#f43f5e'; ctx.font=`bold ${8*DPR}px Roboto`;
       ctx.textAlign='center';
       ctx.fillText('SUPER', x, y-10*DPR);
       ctx.fillText(MONTHS[md.date.getUTCMonth()]+' '+md.date.getUTCDate(), x, y-20*DPR);
@@ -2827,7 +2892,7 @@ function drawMChart3() {
       const x=xOf(md.doy), y=yOf(md.dist);
       ctx.beginPath(); ctx.arc(x,y,5*DPR,0,Math.PI*2);
       ctx.fillStyle='rgba(124,58,237,0.85)'; ctx.fill();
-      ctx.fillStyle='rgba(124,58,237,0.85)'; ctx.font=`bold ${7*DPR}px Orbitron`;
+      ctx.fillStyle='rgba(124,58,237,0.85)'; ctx.font=`bold ${7*DPR}px Roboto`;
       ctx.textAlign='center';
       ctx.fillText('MICRO', x, y+16*DPR);
       ctx.textAlign='left';
@@ -2841,8 +2906,8 @@ function drawMChart3() {
     const y = yOf(d);
     if (y < P.t || y > P.t+CH) continue;
     ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
-    ctx.strokeStyle='rgba(27,44,71,0.65)'; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle='rgba(61,88,112,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    ctx.strokeStyle='rgba(43,101,155,0.65)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(164,171,182,0.8)'; ctx.font=`${9*DPR}px Roboto`;
     const lbl = (d/1000).toFixed(0)+'k';
     ctx.fillText(lbl, P.l-ctx.measureText(lbl).width-4*DPR, y+3*DPR);
   }
@@ -2850,7 +2915,7 @@ function drawMChart3() {
 
   // Y axis label
   ctx.save();
-  ctx.fillStyle='rgba(61,88,112,0.6)'; ctx.font=`${8*DPR}px IBM Plex Mono`;
+  ctx.fillStyle='rgba(164,171,182,0.6)'; ctx.font=`${8*DPR}px Roboto`;
   ctx.textAlign='center';
   ctx.translate(P.l-52*DPR, P.t+CH/2); ctx.rotate(-Math.PI/2);
   ctx.fillText('Distance (km)', 0, 0);
@@ -2913,7 +2978,7 @@ function drawMChart2() {
   [0,2,4,6,8].forEach(h => {
     if (h > maxDarkH+0.5) return;
     const y = P.t + CH - (h*60/maxDark)*CH;
-    ctx.fillStyle='rgba(52,211,153,0.45)'; ctx.font=`${8*DPR}px IBM Plex Mono`;
+    ctx.fillStyle='rgba(52,211,153,0.45)'; ctx.font=`${8*DPR}px Roboto`;
     ctx.fillText(h+'h', P.l+CW+4*DPR, y+3*DPR);
   });
 
@@ -2922,8 +2987,8 @@ function drawMChart2() {
   [0,25,50,75,100].forEach(pct => {
     const y = yOfI(pct);
     ctx.beginPath(); ctx.moveTo(P.l,y); ctx.lineTo(P.l+CW,y);
-    ctx.strokeStyle='rgba(27,44,71,0.6)'; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle='rgba(61,88,112,0.8)'; ctx.font=`${9*DPR}px IBM Plex Mono`;
+    ctx.strokeStyle='rgba(43,101,155,0.6)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(164,171,182,0.8)'; ctx.font=`${9*DPR}px Roboto`;
     const lbl=pct+'%'; ctx.fillText(lbl, P.l-ctx.measureText(lbl).width-4*DPR, y+3*DPR);
   });
   ctx.setLineDash([]);
@@ -3085,6 +3150,27 @@ async function applyLocation() {
 }
 
 // GPS button handler
+// ── GPS: shared position handler ──────────────────────────────
+// Called both from the GPS button and automatically on load.
+// silent=true suppresses error messages and button state changes.
+async function applyGPSPosition(pos, silent = false) {
+  const lat = parseFloat(pos.coords.latitude.toFixed(4));
+  const lon = parseFloat(pos.coords.longitude.toFixed(4));
+  document.getElementById('latInput').value = lat;
+  document.getElementById('lonInput').value = lon;
+
+  if (!silent) setStatus('GPS acquired — looking up timezone…', 'busy');
+  let zone = await fetchIANAZone(lat, lon);
+  if (!zone) {
+    const estOff = Math.round(lon / 15);
+    zone = `Etc/GMT${estOff >= 0 ? '-' : '+'}${Math.abs(estOff)}`;
+  }
+
+  // Immediately apply — don't require clicking Apply when GPS is the source
+  fullRebuild({ lat, lon, ianaZone: zone, year: LOC.year,
+    name: `${lat.toFixed(3)}°, ${lon.toFixed(3)}°` });
+}
+
 async function useGPS() {
   if (!navigator.geolocation) return setStatus('Geolocation not available in this browser', 'err');
   setStatus('Acquiring GPS…', 'busy');
@@ -3092,28 +3178,28 @@ async function useGPS() {
 
   navigator.geolocation.getCurrentPosition(
     async pos => {
-      const lat = parseFloat(pos.coords.latitude.toFixed(4));
-      const lon = parseFloat(pos.coords.longitude.toFixed(4));
-      document.getElementById('latInput').value = lat;
-      document.getElementById('lonInput').value = lon;
-
-      setStatus('GPS acquired — looking up timezone…', 'busy');
-      let zone = await fetchIANAZone(lat, lon);
-      if (!zone) {
-        const estOff = Math.round(lon / 15);
-        zone = `Etc/GMT${estOff >= 0 ? '-' : '+'}${Math.abs(estOff)}`;
-      }
-      LOC.ianaZone = zone;
-      LOC.name = `${lat.toFixed(3)}°, ${lon.toFixed(3)}°`;
       document.getElementById('gpsBtn').disabled = false;
-      updateTzDisplay(new Date(Date.UTC(LOC.year, 0, 1)));
-      setStatus(`GPS: ${lat}°, ${lon}° · ${zone} — click Apply to load`, 'ok');
+      await applyGPSPosition(pos, false);
     },
     err => {
       document.getElementById('gpsBtn').disabled = false;
       setStatus('GPS error: ' + err.message, 'err');
     },
     { timeout: 10000 }
+  );
+}
+
+// Auto-GPS on startup — silent fallback to default if unavailable/denied
+function tryAutoGPS() {
+  if (!navigator.geolocation) return; // silently skip
+  navigator.geolocation.getCurrentPosition(
+    async pos => {
+      await applyGPSPosition(pos, true);
+    },
+    () => {
+      // Permission denied or error — stay on default (Clear SFS), no message
+    },
+    { timeout: 8000, maximumAge: 60000 } // accept a 1-min cached position
   );
 }
 
@@ -3285,7 +3371,10 @@ buildStats();
 buildCalendar();
 renderAllCharts();
 updateDayDetail(selectedDoy);
-setStatus('Default: Clear SFS, Alaska — search a city or enter coordinates to change location', 'ok');
+setStatus('Requesting location… (defaults to Clear SFS, AK if unavailable)', 'busy');
+
+// Try GPS automatically — falls back silently to default if denied or unavailable
+tryAutoGPS();
 
 window.addEventListener('resize', () => {
   renderAllCharts();
@@ -3307,11 +3396,20 @@ window.addEventListener('resize', () => {
 
 <script>
 // ── Service Worker registration ──
+// Only register on real hosting — not preview/sandbox environments
+// where sw.js isn't served (claudeusercontent.com, localhost without the file, etc.)
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .catch(err => console.warn('SW registration failed:', err));
-  });
+  const host = location.hostname;
+  const isRealHost = host !== 'localhost' && !host.includes('claudeusercontent') && !host.includes('127.0.0.1') && host !== '';
+  // Also allow localhost explicitly if you're testing locally with a server
+  const isLocalDev = (host === 'localhost' || host === '127.0.0.1') && location.pathname !== '/';
+  if (isRealHost || isLocalDev) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {
+        // Silently ignore — file not present yet, will work after deployment
+      });
+    });
+  }
 }
 
 // ── PWA install prompt ──
