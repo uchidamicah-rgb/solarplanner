@@ -846,6 +846,84 @@ footer {
 }
 
 /* ══════════════════════════════════════
+   DESKTOP RESIZE — Splitter + Chart handles
+   Only shown for pointer:fine (mouse) devices
+══════════════════════════════════════ */
+.picker-splitter {
+  display: none; /* hidden by default, enabled by JS on desktop */
+  width: 8px;
+  cursor: col-resize;
+  background: transparent;
+  border-left: 2px solid var(--color-border-default);
+  transition: border-color 0.15s;
+  align-self: stretch;
+  flex-shrink: 0;
+  position: relative;
+  margin: 0 2px;
+}
+.picker-splitter::after {
+  content: '⋮';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--color-border-default);
+  font-size: 0.7rem;
+  pointer-events: none;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.picker-splitter:hover,
+.picker-splitter.dragging { border-color: var(--color-interactive); }
+.picker-splitter:hover::after,
+.picker-splitter.dragging::after { color: var(--color-interactive); }
+
+/* When splitter is active, switch picker to flex */
+.picker-section.splittable {
+  display: flex !important;
+  gap: 0;
+  align-items: stretch;
+}
+.picker-section.splittable .cal-col {
+  flex: 0 0 auto;
+  min-width: 160px;
+  overflow: hidden;
+}
+.picker-section.splittable .arc-col {
+  flex: 1 1 0;
+  min-width: 100px;
+  overflow: hidden;
+  padding-left: var(--sp-3);
+}
+
+/* Chart resize handle — pill at bottom of each chart */
+.chart-resize-handle {
+  display: none; /* enabled by JS on desktop */
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 16px;
+  cursor: row-resize;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.chart-wrap:hover .chart-resize-handle,
+.chart-resize-handle.dragging { opacity: 1; }
+.chart-resize-handle::before {
+  content: '';
+  width: 36px; height: 3px;
+  border-radius: 2px;
+  background: var(--color-border-default);
+  transition: background 0.15s, width 0.15s;
+}
+.chart-resize-handle:hover::before,
+.chart-resize-handle.dragging::before {
+  background: var(--color-interactive);
+  width: 56px;
+}
+.chart-wrap { position: relative; }
+
+/* ══════════════════════════════════════
    PWA INSTALL BANNER (Astro Notification Banner pattern)
 ══════════════════════════════════════ */
 #pwa-banner {
@@ -1024,6 +1102,9 @@ footer {
       </div>
     </div>
 
+    <!-- Drag splitter (desktop only, activated by JS) -->
+    <div class="picker-splitter" id="pickerSplitter" title="Drag to resize"></div>
+
     <!-- Sun arc -->
     <div class="arc-col">
       <div class="picker-col-label">24h Altitude — ☀ Sun  🌙 Moon</div>
@@ -1179,8 +1260,8 @@ footer {
 
 <script>
 'use strict';
-const BUILD_VERSION = 'solar-planner-20260228_191244';
-const BUILD_DATE = '2026-02-28 19:12 UTC';
+const BUILD_VERSION = 'solar-planner-20260315_012342';
+const BUILD_DATE = '2026-03-15 01:23 UTC';
 // ══════════════════════════════════════════════════════════════
 //  LOCATION STATE  — mutable, drives all calculations
 // ══════════════════════════════════════════════════════════════
@@ -1480,6 +1561,8 @@ function switchTab(tab) {
 
   renderAllCharts();
   if (selectedDoy != null) updateDayDetail(selectedDoy);
+  // Re-init chart handles for newly visible charts
+  initChartHandles();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1732,7 +1815,8 @@ function drawArc(doy) {
   const DPR = window.devicePixelRatio || 1;
 
   const dispW = Math.max(canvas.offsetWidth, 200);
-  const dispH = Math.round(dispW * 0.52);
+  // Use user-set CSS height if available (from splitter drag), else default ratio
+  const dispH = canvas.offsetHeight > 10 ? canvas.offsetHeight : Math.round(dispW * 0.52);
   canvas.width        = dispW * DPR;
   canvas.height       = dispH * DPR;
   canvas.style.height = dispH + 'px';
@@ -2000,7 +2084,7 @@ function drawSelLine(ctx,xOf,P,CH,DPR,color) {
 function drawSChart1() {
   const canvas=document.getElementById('sChart1');
   const DPR=window.devicePixelRatio||1;
-  const W=canvas.offsetWidth*DPR, H=300*DPR;
+  const W=canvas.offsetWidth*DPR, H=Math.max(canvas.offsetHeight||300,300)*DPR;
   canvas.width=W; canvas.height=H;
   const ctx=canvas.getContext('2d');
   const P={t:18*DPR,r:38*DPR,b:32*DPR,l:50*DPR};
@@ -2066,7 +2150,7 @@ function drawSChart1() {
 function drawSChart2() {
   const canvas=document.getElementById('sChart2');
   const DPR=window.devicePixelRatio||1;
-  const W=canvas.offsetWidth*DPR, H=200*DPR;
+  const W=canvas.offsetWidth*DPR, H=Math.max(canvas.offsetHeight||200,200)*DPR;
   canvas.width=W; canvas.height=H;
   const ctx=canvas.getContext('2d');
   const P={t:18*DPR,r:38*DPR,b:32*DPR,l:50*DPR};
@@ -2126,7 +2210,7 @@ function drawSChart2() {
 function drawSChart3() {
   const canvas=document.getElementById('sChart3');
   const DPR=window.devicePixelRatio||1;
-  const W=canvas.offsetWidth*DPR, H=190*DPR;
+  const W=canvas.offsetWidth*DPR, H=Math.max(canvas.offsetHeight||190,190)*DPR;
   canvas.width=W; canvas.height=H;
   const ctx=canvas.getContext('2d');
   const P={t:20*DPR,r:38*DPR,b:32*DPR,l:50*DPR};
@@ -2197,7 +2281,7 @@ function drawSChart3() {
 function drawPChart1() {
   const canvas=document.getElementById('pChart1');
   const DPR=window.devicePixelRatio||1;
-  const W=canvas.offsetWidth*DPR, H=270*DPR;
+  const W=canvas.offsetWidth*DPR, H=Math.max(canvas.offsetHeight||270,270)*DPR;
   canvas.width=W; canvas.height=H;
   const ctx=canvas.getContext('2d');
   const P={t:16*DPR,r:16*DPR,b:32*DPR,l:50*DPR};
@@ -2251,7 +2335,7 @@ function drawPChart1() {
 function drawPChart2() {
   const canvas=document.getElementById('pChart2');
   const DPR=window.devicePixelRatio||1;
-  const W=canvas.offsetWidth*DPR, H=185*DPR;
+  const W=canvas.offsetWidth*DPR, H=Math.max(canvas.offsetHeight||185,185)*DPR;
   canvas.width=W; canvas.height=H;
   const ctx=canvas.getContext('2d');
   const P={t:18*DPR,r:44*DPR,b:32*DPR,l:50*DPR};
@@ -2318,7 +2402,9 @@ function renderAllCharts() {
 const ttEl = document.getElementById('tooltip');
 
 function getTooltipHTML(doy) {
-  const d=data[doy], mon=MONTHS[d.date.getUTCMonth()], tz=tzLabel(d.off);
+  const d = data[doy];
+  if (!d) return '';  // guard against out-of-range doy
+  const mon=MONTHS[d.date.getUTCMonth()], tz=tzLabel(d.off);
   const row=(k,v)=>`<div class="tt-r"><span class="tt-k">${k}</span><span class="tt-v">${v}</span></div>`;
   let rows='';
   if (d.polarDay)        rows+=row('Status','☀ Midnight Sun');
@@ -2352,6 +2438,7 @@ function showTooltip(doy, clientX, clientY) {
 
 // Track which canvas last triggered a touch tooltip so we can dismiss correctly
 let _activeTouchCanvas = null;
+let _lastTouchDoy = null;
 
 function bindChart(canvasId) {
   const canvas = document.getElementById(canvasId);
@@ -2359,7 +2446,8 @@ function bindChart(canvasId) {
 
   const getDoy = clientX => {
     const rect = canvas.getBoundingClientRect();
-    return Math.min(data.length-1, Math.max(0, Math.round((clientX - rect.left) / rect.width * (data.length-1))));
+    const frac = (clientX - rect.left) / rect.width;
+    return Math.min(data.length-1, Math.max(0, Math.floor(frac * data.length)));
   };
 
   // ── Desktop: hover tooltip ──
@@ -2369,26 +2457,34 @@ function bindChart(canvasId) {
   canvas.addEventListener('mouseleave', () => { ttEl.style.display = 'none'; });
 
   // ── Touch: tooltip follows finger while pressed, stays on release ──
-  // All passive — never blocks scroll.
   canvas.addEventListener('touchstart', e => {
     const t = e.touches[0];
+    const doy = getDoy(t.clientX);
+    if (!data[doy]) return;
+    _lastTouchDoy = doy;
     _activeTouchCanvas = canvas;
-    anchorTouchTooltip(getDoy(t.clientX), canvas);
+    ttEl.innerHTML = getTooltipHTML(_lastTouchDoy);
+    ttEl.style.display = 'block';
+    requestAnimationFrame(() => anchorTouchTooltip(null, canvas));
   }, { passive: true });
 
   canvas.addEventListener('touchmove', e => {
     const t = e.touches[0];
-    anchorTouchTooltip(getDoy(t.clientX), canvas);
+    _lastTouchDoy = getDoy(t.clientX);
+    anchorTouchTooltip(_lastTouchDoy, canvas);
   }, { passive: true });
 
-  // On release: keep tooltip visible, anchored to canvas — dismiss on next tap elsewhere
+  // On release: defer re-anchor one frame so the element has real rendered dimensions
   canvas.addEventListener('touchend', () => {
-    anchorTouchTooltip(null, canvas); // re-anchor without changing content
+    if (_lastTouchDoy !== null) {
+      requestAnimationFrame(() => anchorTouchTooltip(_lastTouchDoy, canvas));
+    }
   }, { passive: true });
 
   canvas.addEventListener('touchcancel', () => {
     ttEl.style.display = 'none';
     _activeTouchCanvas = null;
+    _lastTouchDoy = null;
   }, { passive: true });
 }
 
@@ -2397,41 +2493,39 @@ document.addEventListener('touchstart', e => {
   if (_activeTouchCanvas && !e.target.closest('canvas')) {
     ttEl.style.display = 'none';
     _activeTouchCanvas = null;
+    _lastTouchDoy = null;
   }
 }, { passive: true });
 
 // Position tooltip centered horizontally on the canvas, locked above (or below) it
-// doy=null means re-anchor without refreshing content
 function anchorTouchTooltip(doy, canvas) {
-  if (doy !== null) {
-    ttEl.innerHTML = getTooltipHTML(doy);
-  }
+  ttEl.innerHTML = getTooltipHTML(doy);
   ttEl.style.display = 'block';
 
-  // Use scrollY + getBoundingClientRect so position is correct even when page is scrolled
-  const rect = canvas.getBoundingClientRect();
-  const scrollY = window.scrollY || window.pageYOffset;
-  const scrollX = window.scrollX || window.pageXOffset;
+  // Let the browser paint so offsetWidth/Height are real
+  requestAnimationFrame(() => {
+    const rect = canvas.getBoundingClientRect();
+    const scrollY = window.scrollY || window.pageYOffset;
+    const scrollX = window.scrollX || window.pageXOffset;
 
-  const ttW = ttEl.offsetWidth  || 220;
-  const ttH = ttEl.offsetHeight || 180;
+    const ttW = ttEl.offsetWidth  || 220;
+    const ttH = ttEl.offsetHeight || 180;
 
-  // Centered horizontally on canvas
-  let lx = scrollX + rect.left + rect.width / 2 - ttW / 2;
-  // Above canvas by default
-  let ly = scrollY + rect.top - ttH - 10;
-  // Flip below if not enough room above the viewport top
-  if (rect.top - ttH - 10 < 8) {
-    ly = scrollY + rect.bottom + 10;
-  }
+    // Centered horizontally on canvas
+    let lx = scrollX + rect.left + rect.width / 2 - ttW / 2;
+    // Above canvas by default
+    let ly = scrollY + rect.top - ttH - 10;
+    // Flip below if not enough room above the viewport
+    if (rect.top - ttH - 10 < 8) {
+      ly = scrollY + rect.bottom + 10;
+    }
 
-  // Clamp horizontally within page
-  lx = Math.max(scrollX + 8, Math.min(lx, scrollX + window.innerWidth - ttW - 8));
+    lx = Math.max(scrollX + 8, Math.min(lx, scrollX + window.innerWidth - ttW - 8));
 
-  // Switch tooltip to absolute positioning so it stays locked as the page scrolls
-  ttEl.style.position = 'absolute';
-  ttEl.style.left = lx + 'px';
-  ttEl.style.top  = ly + 'px';
+    ttEl.style.position = 'absolute';
+    ttEl.style.left = lx + 'px';
+    ttEl.style.top  = ly + 'px';
+  });
 }
 
 
@@ -2629,7 +2723,7 @@ function drawSChart4() {
   const canvas = document.getElementById('sChart4');
   if (!canvas) return;
   const DPR = window.devicePixelRatio || 1;
-  const W = canvas.offsetWidth * DPR, H = 300 * DPR;
+  const W = canvas.offsetWidth * DPR, H = Math.max(canvas.offsetHeight||300,300) * DPR;
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
 
@@ -2821,7 +2915,7 @@ function drawMChart1() {
   const canvas = document.getElementById('mChart1');
   if (!canvas) return;
   const DPR = window.devicePixelRatio || 1;
-  const W = canvas.offsetWidth * DPR, H = 220*DPR;
+  const W = canvas.offsetWidth * DPR, H = Math.max(canvas.offsetHeight||220,220) * DPR;
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
   const P = { t:18*DPR, r:38*DPR, b:32*DPR, l:52*DPR };
@@ -2906,7 +3000,7 @@ function drawMChart3() {
   const canvas = document.getElementById('mChart3');
   if (!canvas) return;
   const DPR = window.devicePixelRatio || 1;
-  const W = canvas.offsetWidth * DPR, H = 220*DPR;
+  const W = canvas.offsetWidth * DPR, H = Math.max(canvas.offsetHeight||220,220) * DPR;
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
   const P = { t:18*DPR, r:38*DPR, b:32*DPR, l:66*DPR };
@@ -3030,7 +3124,7 @@ function drawMChart2() {
   const canvas = document.getElementById('mChart2');
   if (!canvas) return;
   const DPR = window.devicePixelRatio || 1;
-  const W = canvas.offsetWidth * DPR, H = 200*DPR;
+  const W = canvas.offsetWidth * DPR, H = Math.max(canvas.offsetHeight||200,200) * DPR;
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
   const P = { t:18*DPR, r:50*DPR, b:32*DPR, l:50*DPR };
@@ -3454,8 +3548,131 @@ cityInput.addEventListener('blur', () => {
 
 
 // ══════════════════════════════════════════════════════════════
-//  INIT
+//  DESKTOP RESIZE — Splitter + Chart height handles
+//  Only active on pointer:fine (mouse) devices wider than 700px.
 // ══════════════════════════════════════════════════════════════
+
+function isDesktop() {
+  return window.matchMedia('(hover: hover) and (pointer: fine)').matches
+      && window.innerWidth > 700;
+}
+
+// ── Picker panel splitter ──────────────────────────────────────
+function initPickerSplitter() {
+  if (!isDesktop()) return;
+
+  const section  = document.getElementById('pickerSection');
+  const splitter = document.getElementById('pickerSplitter');
+  const calCol   = section.querySelector('.cal-col');
+
+  section.classList.add('splittable');
+  splitter.style.display = 'flex';
+
+  const saved = localStorage.getItem('picker-cal-width');
+  if (saved) calCol.style.width = saved + 'px';
+
+  let startX, startW, rafId;
+
+  function onMove(e) {
+    const dx   = e.clientX - startX;
+    const newW = Math.max(160, Math.min(startW + dx, section.offsetWidth - 120));
+    calCol.style.width = newW + 'px';
+    // Redraw arc at new width every frame — reads offsetWidth so always correct DPR
+    cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => drawArc(selectedDoy));
+  }
+
+  function onUp() {
+    splitter.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    localStorage.setItem('picker-cal-width', parseInt(calCol.style.width));
+    cancelAnimationFrame(rafId);
+    drawArc(selectedDoy);
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup',   onUp);
+  }
+
+  splitter.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    startX = e.clientX;
+    startW = calCol.offsetWidth;
+    splitter.classList.add('dragging');
+    document.body.style.cursor    = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onUp);
+    e.preventDefault();
+  });
+}
+
+// ── Chart height handles ───────────────────────────────────────
+// Map canvas ID → its specific draw function so we redraw only that chart
+function getDrawFn(canvasId) {
+  const solar = { sChart1: drawSChart1, sChart3: drawSChart3, sChart4: drawSChart4 };
+  const photo = { pChart1: drawPChart1, pChart2: drawPChart2 };
+  const moon  = { mChart1: drawMChart1, mChart2: drawMChart2, mChart3: drawMChart3 };
+  return { ...solar, ...photo, ...moon }[canvasId] || renderAllCharts;
+}
+
+function initChartHandles() {
+  if (!isDesktop()) return;
+
+  document.querySelectorAll('.chart-wrap').forEach(wrap => {
+    const canvas = wrap.querySelector('canvas');
+    if (!canvas) return;
+    if (wrap.querySelector('.chart-resize-handle')) return;
+
+    const handle = document.createElement('div');
+    handle.className = 'chart-resize-handle';
+    handle.style.display = 'flex';
+    handle.title = 'Drag to resize chart';
+    wrap.appendChild(handle);
+
+    // Restore saved CSS height (draw functions set their own canvas pixel size)
+    const key   = 'chart-h-' + canvas.id;
+    const saved = localStorage.getItem(key);
+    if (saved) canvas.style.height = saved + 'px';
+
+    const drawFn = getDrawFn(canvas.id);
+    let startY, startH, rafId;
+
+    function onMove(e) {
+      const dy   = e.clientY - startY;
+      const newH = Math.max(80, startH + dy);
+      // Set CSS height only — the draw function reads offsetWidth/offsetHeight
+      // and sets the canvas bitmap attributes itself at correct DPR
+      canvas.style.height = newH + 'px';
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => drawFn());
+    }
+
+    function onUp() {
+      handle.classList.remove('dragging');
+      document.body.style.cursor    = '';
+      document.body.style.userSelect = '';
+      cancelAnimationFrame(rafId);
+      localStorage.setItem(key, parseInt(canvas.style.height));
+      drawFn(); // final clean draw
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup',   onUp);
+    }
+
+    handle.addEventListener('mousedown', e => {
+      if (e.button !== 0) return;
+      startY = e.clientY;
+      startH = canvas.offsetHeight;
+      handle.classList.add('dragging');
+      document.body.style.cursor    = 'row-resize';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup',   onUp);
+      e.preventDefault();
+    });
+  });
+}
+
+
 syncInputsToLOC();
 moonData = buildMoonData();
 updateTzDisplay(data[selectedDoy].date);
@@ -3468,6 +3685,10 @@ setStatus('Requesting location… (defaults to Clear SFS, AK if unavailable)', '
 
 // Try GPS automatically — falls back silently to default if denied or unavailable
 tryAutoGPS();
+
+// Desktop resize handles (no-op on mobile/touch)
+initPickerSplitter();
+initChartHandles();
 
 window.addEventListener('resize', () => {
   renderAllCharts();
