@@ -516,6 +516,7 @@ canvas {
   align-items: stretch;
   flex: 2 1 300px;
   min-width: 220px;
+  position: relative;
 }
 #sharedArcCanvas { display: block; width: 100%; }
 
@@ -1260,8 +1261,8 @@ footer {
 
 <script>
 'use strict';
-const BUILD_VERSION = 'solar-planner-20260315_012342';
-const BUILD_DATE = '2026-03-15 01:23 UTC';
+const BUILD_VERSION = 'solar-planner-20260315_012944';
+const BUILD_DATE = '2026-03-15 01:29 UTC';
 // ══════════════════════════════════════════════════════════════
 //  LOCATION STATE  — mutable, drives all calculations
 // ══════════════════════════════════════════════════════════════
@@ -3561,38 +3562,41 @@ function isDesktop() {
 function initPickerSplitter() {
   if (!isDesktop()) return;
 
-  const section  = document.getElementById('pickerSection');
-  const splitter = document.getElementById('pickerSplitter');
-  const calCol   = section.querySelector('.cal-col');
+  const section   = document.getElementById('pickerSection');
+  const splitter  = document.getElementById('pickerSplitter');
+  const calCol    = section.querySelector('.cal-col');
+  const arcCol    = section.querySelector('.arc-col');
+  const arcCanvas = document.getElementById('sharedArcCanvas');
 
   section.classList.add('splittable');
   splitter.style.display = 'flex';
 
-  const saved = localStorage.getItem('picker-cal-width');
-  if (saved) calCol.style.width = saved + 'px';
+  // Restore saved sizes
+  const savedW = localStorage.getItem('picker-cal-width');
+  if (savedW) calCol.style.width = savedW + 'px';
+  const savedH = localStorage.getItem('arc-canvas-height');
+  if (savedH) arcCanvas.style.height = savedH + 'px';
 
-  let startX, startW, rafId;
+  // ── Horizontal splitter ──
+  let startX, startW, rafH;
 
-  function onMove(e) {
+  function onMoveH(e) {
     const dx   = e.clientX - startX;
     const newW = Math.max(160, Math.min(startW + dx, section.offsetWidth - 120));
     calCol.style.width = newW + 'px';
-    // Redraw arc at new width every frame — reads offsetWidth so always correct DPR
-    cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(() => drawArc(selectedDoy));
+    cancelAnimationFrame(rafH);
+    rafH = requestAnimationFrame(() => drawArc(selectedDoy));
   }
-
-  function onUp() {
+  function onUpH() {
     splitter.classList.remove('dragging');
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
     localStorage.setItem('picker-cal-width', parseInt(calCol.style.width));
-    cancelAnimationFrame(rafId);
+    cancelAnimationFrame(rafH);
     drawArc(selectedDoy);
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup',   onUp);
+    document.removeEventListener('mousemove', onMoveH);
+    document.removeEventListener('mouseup',   onUpH);
   }
-
   splitter.addEventListener('mousedown', e => {
     if (e.button !== 0) return;
     startX = e.clientX;
@@ -3600,8 +3604,46 @@ function initPickerSplitter() {
     splitter.classList.add('dragging');
     document.body.style.cursor    = 'col-resize';
     document.body.style.userSelect = 'none';
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup',   onUp);
+    document.addEventListener('mousemove', onMoveH);
+    document.addEventListener('mouseup',   onUpH);
+    e.preventDefault();
+  });
+
+  // ── Vertical resize handle on the arc canvas ──
+  const arcHandle = document.createElement('div');
+  arcHandle.className = 'chart-resize-handle';
+  arcHandle.style.display = 'flex';
+  arcHandle.title = 'Drag to resize altitude plot';
+  arcCol.appendChild(arcHandle);
+
+  let startY, startAH, rafV;
+
+  function onMoveV(e) {
+    const dy   = e.clientY - startY;
+    const newH = Math.max(80, startAH + dy);
+    arcCanvas.style.height = newH + 'px';
+    cancelAnimationFrame(rafV);
+    rafV = requestAnimationFrame(() => drawArc(selectedDoy));
+  }
+  function onUpV() {
+    arcHandle.classList.remove('dragging');
+    document.body.style.cursor    = '';
+    document.body.style.userSelect = '';
+    cancelAnimationFrame(rafV);
+    localStorage.setItem('arc-canvas-height', parseInt(arcCanvas.style.height));
+    drawArc(selectedDoy);
+    document.removeEventListener('mousemove', onMoveV);
+    document.removeEventListener('mouseup',   onUpV);
+  }
+  arcHandle.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    startY  = e.clientY;
+    startAH = arcCanvas.offsetHeight;
+    arcHandle.classList.add('dragging');
+    document.body.style.cursor    = 'row-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMoveV);
+    document.addEventListener('mouseup',   onUpV);
     e.preventDefault();
   });
 }
